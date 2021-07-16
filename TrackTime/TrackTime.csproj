@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net5.0</TargetFramework>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <AvaloniaResource Include="Assets\**" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="0.10.6" />
+    <PackageReference Include="Avalonia.Desktop" Version="0.10.6" />
+    <PackageReference Include="Avalonia.Diagnostics" Version="0.10.6" />
+    <PackageReference Include="Avalonia.ReactiveUI" Version="0.10.6" />
+    <PackageReference Include="Avalonia.ReactiveUI.Events" Version="0.10.6" />
+    <PackageReference Include="DynamicData" Version="7.2.1" />
+    <PackageReference Include="ReactiveUI.Validation" Version="2.1.1" />
+    <PackageReference Include="XamlNameReferenceGenerator" Version="1.2.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\TrackTime.Core\TrackTime.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Update="Views\ConfirmationView.axaml.cs">
+      <DependentUpon>ConfirmationView.axaml</DependentUpon>
+    </Compile>
+    <Compile Update="Views\MessageBoxView.axaml.cs">
+      <DependentUpon>MessageBoxView.axaml</DependentUpon>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="MenuIcons.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </None>
+  </ItemGroup>
+</Project>

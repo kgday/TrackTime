@@ -1,0 +1,68 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:views="using:TrackTime.Views"
+             mc:Ignorable="d"
+             x:Class="TrackTime.Views.CustomerView"
+             d:DesignWidth="800" >
+  <UserControl.Styles>
+    <Style Selector="TextBlock">
+      <Setter Property="FontSize" Value="12"/>
+      <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+    <Style Selector="TextBox">
+      <Setter Property="FontSize" Value="12"/>
+      <Setter Property="HorizontalAlignment" Value="Stretch"/>
+    </Style>
+  </UserControl.Styles>
+  <Grid Margin="5" RowDefinitions="*,*">
+    <Grid x:Name="ViewingGrid" ColumnDefinitions="*,2*,Auto" RowDefinitions="Auto,Auto,*,Auto" >
+      <TextBlock x:Name="CustomerNameText" Grid.Column="0" Grid.ColumnSpan="2" Text="Customer Name" FontSize="16"/>
+      <TextBlock x:Name="ActiveIndicator" Text="Active" HorizontalAlignment="Right" Grid.Column="2" Foreground="Red"/>
+      <TextBlock x:Name="InActiveIndicator" Text="InActive" HorizontalAlignment="Right" Grid.Column="2" Foreground="DarkGray"/>
+      <DockPanel  Grid.Row="1" >
+        <TextBlock Text="Ph:" Margin="0,0,4,0" />
+        <TextBlock x:Name="PhoneNoText" Text="0987 2345689" />
+      </DockPanel>
+      <DockPanel  Grid.Row="1" Grid.Column="1">
+        <TextBlock Text="Email:" Margin="0,0,4,0"/>
+        <TextBlock x:Name="EmailText" Text="joe@smithEnterprises.com"/>
+      </DockPanel>
+      <TextBlock x:Name="Notes" TextWrapping="WrapWithOverflow" Grid.ColumnSpan="2" Grid.Row="2" Text="This is some generous text allowing for long Notes. In practice, I don't kow how long."/>
+      <StackPanel Grid.Row="3" Grid.ColumnSpan="3" Orientation="Horizontal" HorizontalAlignment="Right">
+        <Button x:Name="DeleteButton" BorderThickness="0" Background="Transparent">
+          <Image Width="24" Height="24" Source="{StaticResource DeleteButtonImage}"/>
+        </Button>
+        <Button x:Name="EditButton" BorderThickness="0" Background="Transparent">
+          <Image Width="24" Height="24" Source="{StaticResource EditButtonImage}"/>
+        </Button>
+      </StackPanel>
+    </Grid>
+
+    <Grid x:Name="EditingGrid" ColumnDefinitions="*,2*,Auto" RowDefinitions="Auto,Auto,*,Auto,Auto" Grid.Row="1">
+      <TextBox x:Name="CustomerNameEdit" Grid.Column="0" Grid.ColumnSpan="2" FontSize="16" Watermark="Customer Name"/>
+      <CheckBox x:Name="ActiveCheckBox" IsChecked="true" HorizontalAlignment="Right" Grid.Column="2" Margin="5,0,5,0">Active</CheckBox>
+      <DockPanel  Grid.Row="1" Margin="0,1,2,0">
+        <TextBlock Text="Ph:" Margin="0,0,2,0" DockPanel.Dock="Left" />
+        <TextBox x:Name="PhoneNoEdit" Watermark="Phone No" DockPanel.Dock="Right"/>
+      </DockPanel>
+      <DockPanel  Grid.Row="1" Grid.Column="1" Margin="3,1,0,0" Grid.ColumnSpan="2">
+        <TextBlock Text="Email:" Margin="0,0,2,0"/>
+        <TextBox x:Name="EmailEdit" Watermark="Email"/>
+      </DockPanel>
+      <TextBox x:Name="NotesEdit" TextWrapping="WrapWithOverflow" Margin="0,1,0,0"
+               Grid.ColumnSpan="3" Grid.Row="2" Watermark="Notes" MinHeight="60"/>
+      <TextBlock x:Name="ErrorText" Grid.Row="3" Grid.ColumnSpan="3" Text="Error" Margin="5" Foreground="Red" TextWrapping="WrapWithOverflow"/>
+      <StackPanel Grid.Row="4" Grid.ColumnSpan="3" Orientation="Horizontal" HorizontalAlignment="Right">
+        <Button x:Name="SaveButton" BorderThickness="0" Background="Transparent">
+          <Image Width="24" Height="24" Source="{StaticResource SaveEditButtonImage}"/>
+        </Button>
+        <Button x:Name="CancelButton" BorderThickness="0" Background="Transparent">
+          <Image Width="24" Height="24" Source="{StaticResource CancelEditButtonImage}"/>
+        </Button>
+      </StackPanel>
+    </Grid>
+
+  </Grid>
+</UserControl>
