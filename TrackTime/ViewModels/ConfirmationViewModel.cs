@@ -10,7 +10,7 @@ namespace TrackTime.ViewModels
 {
     public class ConfirmationViewModel : DialogViewModel
     {
-        private Subject<bool> _onResult = new();
+        private readonly Subject<bool> _onResult = new();
         private string _prompt = string.Empty;
 
         public ConfirmationViewModel()

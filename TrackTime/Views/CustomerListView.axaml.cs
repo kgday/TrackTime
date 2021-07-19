@@ -27,14 +27,16 @@ namespace TrackTime.Views
                 {
                     this.OneWayBind(viewModel, vm => vm.ItemList, v => v.CustomerList.Items).DisposeWith(d);
                     this.Bind(ViewModel, vm => vm.SelectedItem, v => v.CustomerList.SelectedItem).DisposeWith(d);
+                    this.BindCommand(viewModel, vm => vm.CreateNewItem, v => v.CreateButton).DisposeWith(d);
                 })
                 .DisposeWith(d);
             });
         }
 
-        private void InitializeComponent()
-        {
-            AvaloniaXamlLoader.Load(this);
-        }
+        //using XamlNameReferenceGenerator which also generates InitializeComponent
+        // private void InitializeComponent()
+        // {
+        //     AvaloniaXamlLoader.Load(this);
+        // }
     }
 }

@@ -75,15 +75,16 @@ namespace TrackTime.ViewModels
                     })
                     .Switch();
             }, canDelete);
+
         }
 
         public bool IsEditing { get => _isEditing; set => this.RaiseAndSetIfChanged(ref _isEditing, value); }
+        
         public ReactiveCommand<Unit, Unit> Edit { get; }
-        public ReactiveCommand<Unit, TModel?> CancelEdit { get; } //return a fresh model from the model service
-        public ReactiveCommand<Unit, Unit> SaveEdits { get; }
+                public ReactiveCommand<Unit, TModel?> CancelEdit { get; } //return a fresh model from the model service
+        public ReactiveCommand<Unit, Unit> SaveEdits { get; } 
         public ReactiveCommand<Unit, bool> Delete { get; }
         public ValidationContext ValidationContext { get; } = new ();
-
         protected abstract string DeleteConfirmationPrompt();
 
     }

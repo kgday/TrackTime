@@ -13,7 +13,7 @@ namespace TrackTime.ViewModels
     public class MessageBoxViewModel : DialogViewModel
     {
         private  string _message = string.Empty;
-        private Subject<Unit> _onDismmissed = new();
+        private readonly Subject<Unit> _onDismmissed = new();
 
         public MessageBoxViewModel()
         {

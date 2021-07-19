@@ -22,8 +22,8 @@ namespace TrackTime.ViewModels
         private bool _isActive = true;
         private string _comments = string.Empty;
 
-        private ObservableAsPropertyHelper<bool> _showActiveIndicator;
-        private ObservableAsPropertyHelper<bool> _showInactiveIndicator;
+        private readonly ObservableAsPropertyHelper<bool> _showActiveIndicator;
+        private readonly ObservableAsPropertyHelper<bool> _showInactiveIndicator;
 
         public CustomerViewModel(Func<ICustomerModelService> customerModelServiceFactory, IDialogService dialogService) : base(customerModelServiceFactory, dialogService)
         {

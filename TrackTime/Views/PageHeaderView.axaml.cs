@@ -33,10 +33,11 @@ namespace TrackTime.Views
                 });
         }
 
-        private void InitializeComponent()
-        {
-            AvaloniaXamlLoader.Load(this);
-        }
+        //using XamlNameReferenceGenerator which also generates InitializeComponent
+        // private void InitializeComponent()
+        // {
+        //     AvaloniaXamlLoader.Load(this);
+        // }
 
         private IImage? GetImageFromString(string idString)
         {

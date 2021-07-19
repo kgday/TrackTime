@@ -14,7 +14,7 @@ using TrackTime.Models;
 
 namespace TrackTime.ViewModels
 {
-    public abstract class ListViewModel<TModel, TViewModel> : ViewModelBase where TViewModel : ViewModelBasedOnModel<TModel> where TModel : ModelBase
+    public abstract class ListViewModel<TModel, TViewModel> : ViewModelBase where TViewModel : EditableViewModel<TModel> where TModel : ModelBase, new()
     {
         private readonly SourceList<TViewModel> _viewModelsSource;
         private readonly ReadOnlyObservableCollection<TViewModel> _itemList;
@@ -22,9 +22,9 @@ namespace TrackTime.ViewModels
         private int _itemsPerPage = 50;
         private int _currentPage = 1;
 
-        private ObservableAsPropertyHelper<int> _totalPages;
-        private ObservableAsPropertyHelper<long> _totalItems;
-        private ObservableAsPropertyHelper<bool> _hasMultiplePages;
+        private readonly ObservableAsPropertyHelper<int> _totalPages;
+        private readonly ObservableAsPropertyHelper<long> _totalItems;
+        private readonly ObservableAsPropertyHelper<bool> _hasMultiplePages;
         private TViewModel? _selectedItem;
 
         public ListViewModel(Func<TViewModel> viewModelFactory)
@@ -36,7 +36,15 @@ namespace TrackTime.ViewModels
                 .RefCount();
 
             _viewModelChangeset
-                .Bind(out _itemList);
+                .Bind(out _itemList)
+                .ObserveOn(RxApp.MainThreadScheduler)
+                .Subscribe();
+
+
+            Load = ReactiveCommand.CreateFromObservable(() => DoLoad());
+            _totalItems = Load
+                .Select(response => response.TotalRecords)
+                .ToProperty(this, x => x.TotalItems);
 
             _totalPages = this.WhenAnyValue(x => x.TotalItems, x => x.ItemsPerPage, (totalItems, itemsPP) =>
                 {
@@ -49,10 +57,6 @@ namespace TrackTime.ViewModels
                 .Select(pageCount => pageCount > 1)
                 .ToProperty(this, x => x.HasMultiplePages);
 
-            Load = ReactiveCommand.CreateFromObservable(() => DoLoad());
-            _totalItems = Load
-                .Select(response => response.TotalRecords)
-                .ToProperty(this, x => x.TotalItems);
             Load
                 .Subscribe(response =>
                 {
@@ -68,6 +72,21 @@ namespace TrackTime.ViewModels
                     });
                     SelectedItem = ItemList.FirstOrDefault();
                 });
+
+            CreateNewItem = ReactiveCommand.CreateFromObservable(() =>
+            {
+                var vm = viewModelFactory();
+                return vm.Edit.Execute().Select(_ => vm);
+            });
+
+            CreateNewItem
+                .Subscribe(newVm => _viewModelsSource.Add(newVm));
+
+            CreateNewItem
+                .WhereNotNull()
+                .Select(newItem => newItem.WhenAnyValue(x => x.CancelEdit).Select(_ => newItem))
+                .Switch()
+                .Subscribe(newItem => _viewModelsSource.Remove(newItem));
 
             var canGotoFirst = this.WhenAnyValue(x => x.CurrentPage).Select(page => page > 1);
             FirstPage = ReactiveCommand.Create(() => { CurrentPage = 1; }, canGotoFirst);
@@ -93,10 +112,12 @@ namespace TrackTime.ViewModels
         public ReactiveCommand<Unit, Unit> PreviousPage { get; }
         public int ItemsPerPage { get => _itemsPerPage; set => this.RaiseAndSetIfChanged(ref _itemsPerPage, value); }
         public int CurrentPage { get => _currentPage; set => this.RaiseAndSetIfChanged(ref _currentPage, value); }
-        public int TotalPages => _totalPages.Value;
+        public int TotalPages => TotalPages1.Value;
         public long TotalItems => _totalItems.Value;
         public bool HasMultiplePages => _hasMultiplePages.Value;
         public TViewModel? SelectedItem { get => _selectedItem; set => this.RaiseAndSetIfChanged(ref _selectedItem, value); }
+        public ReactiveCommand<Unit, TViewModel> CreateNewItem { get; }
+        public ObservableAsPropertyHelper<int> TotalPages1 => _totalPages;
 
         protected abstract IObservable<ListRetrievalResponse<TModel>> DoLoad();
     }

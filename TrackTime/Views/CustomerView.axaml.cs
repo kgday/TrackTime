@@ -26,17 +26,17 @@ namespace TrackTime.Views
                 .Subscribe(viewModel =>
                 {
                     this.OneWayBind(viewModel, vm => vm.Name, v => v.CustomerNameText.Text).DisposeWith(d);
-                    this.OneWayBind(viewModel, vm=>vm.ShowActiveIndicator, v=>v.ActiveIndicator.IsVisible).DisposeWith(d);
+                    this.OneWayBind(viewModel, vm => vm.ShowActiveIndicator, v => v.ActiveIndicator.IsVisible).DisposeWith(d);
                     this.OneWayBind(viewModel, vm => vm.ShowInactiveIndicator, v => v.InActiveIndicator.IsVisible).DisposeWith(d);
                     this.OneWayBind(viewModel, vm => vm.Phone, v => v.PhoneNoText.Text).DisposeWith(d);
-                    this.OneWayBind(viewModel, vm=>vm.Email, v=>v.EmailText.Text).DisposeWith(d);
+                    this.OneWayBind(viewModel, vm => vm.Email, v => v.EmailText.Text).DisposeWith(d);
                     this.OneWayBind(viewModel, vm => vm.Notes, v => v.Notes.Text).DisposeWith(d);
                     this.BindCommand(viewModel, vm => vm.Edit, v => v.EditButton).DisposeWith(d);
                     this.BindCommand(viewModel, vm => vm.Delete, v => v.DeleteButton).DisposeWith(d);
 
                     this.OneWayBind(viewModel, vm => vm.IsEditing, v => v.ViewingGrid.IsVisible, editing => !editing).DisposeWith(d);
                     this.OneWayBind(viewModel, vm => vm.IsEditing, v => v.EditingGrid.IsVisible).DisposeWith(d);
-                    
+
 
                     this.Bind(viewModel, vm => vm.Name, v => v.CustomerNameEdit.Text).DisposeWith(d);
                     this.Bind(viewModel, vm => vm.IsActive, v => v.ActiveCheckBox.IsChecked).DisposeWith(d);
@@ -52,9 +52,11 @@ namespace TrackTime.Views
         }
 
 
-        private void InitializeComponent()
-        {
-            AvaloniaXamlLoader.Load(this);
-        }
+
+        //using XamlNameReferenceGenerator which also generates InitializeComponent
+        // private void InitializeComponent()
+        // {
+        //     AvaloniaXamlLoader.Load(this);
+        // }
     }
 }

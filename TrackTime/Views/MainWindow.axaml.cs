@@ -34,17 +34,18 @@ namespace TrackTime.Views
                 .WhereNotNull()
                 .Subscribe(viewModel =>
                 {
+                    DialogHostBorder.IsVisible = false;
                     this.OneWayBind(viewModel, vm => vm.Pages, v => v.Pages.Items).DisposeWith(d);
                 })
                 .DisposeWith(d);
             });
 
         }
-
-        private void InitializeComponent()
-        {
-            AvaloniaXamlLoader.Load(this);
-        }
+        //using XamlNameReferenceGenerator which also generates InitializeComponent
+        // private void InitializeComponent()
+        // {
+        //     AvaloniaXamlLoader.Load(this);
+        // }
 
         //Returns an ovservable of when the dialog was closed - it could be closed by the user clicking the dialog background
         public IObservable<UIDialogResult<TResult>> ShowDialog<TResult>(DialogViewModel viewModel, IObservable<TResult> onResult)
@@ -52,7 +53,7 @@ namespace TrackTime.Views
             _dialogSubscriptions = new CompositeDisposable();
 
             DialogCaptionText.Text = viewModel.Caption;
-            DialogHost.ViewModel = viewModel;            
+            DialogHost.ViewModel = viewModel;
             DialogHostBorder.IsVisible = true;
 
             Disposable.Create(() =>
@@ -71,7 +72,7 @@ namespace TrackTime.Views
                 .Take(1)
                 .ObserveOn(RxApp.MainThreadScheduler)
                 .Subscribe(_ => { }, () => _dialogSubscriptions.Dispose())
-                .DisposeWith(_dialogSubscriptions); 
+                .DisposeWith(_dialogSubscriptions);
 
             return onResult.Select(result => new UIDialogResult<TResult>() { Result = result })
                 .Merge(clickedOnBackground.Select(_ => new UIDialogResult<TResult>() { Cancelled = true }));

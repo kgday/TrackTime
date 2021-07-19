@@ -14,7 +14,7 @@ namespace TrackTime.Data
         private ILiteCollection<TimeEntry>? _timeEntries;
         private ILiteCollection<Customer>? _customers;
 
-        private ConnectionString _connStr;
+        private readonly ConnectionString _connStr;
         private LiteDatabase? _database = null;
         static AppDataContext()
         {

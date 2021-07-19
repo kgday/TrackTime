@@ -2,7 +2,7 @@
 
 using System;
 using System.Collections.Generic;
-
+using System.Reactive;
 using TrackTime.Data;
 using TrackTime.Models;
 
@@ -18,6 +18,8 @@ namespace TrackTime.ViewModels
                             ) : base(TViewModelFactory)
         {
             _workItemModelServiceFactory = workItemModelServiceFactory;
+ 
+            
         }
 
         public bool IncludeCompleted { get => _includeCompleted; set => this.RaiseAndSetIfChanged(ref _includeCompleted, value); }
@@ -28,5 +30,7 @@ namespace TrackTime.ViewModels
             var modelService = _workItemModelServiceFactory();
             return modelService.Get(ForCustomerId, IncludeCompleted, CurrentPage, ItemsPerPage);
         }
+
+
     }
 }

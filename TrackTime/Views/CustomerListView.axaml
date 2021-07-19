@@ -3,10 +3,20 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:views="using:TrackTime.Views"
+             xmlns:rxui="http://reactiveui.net"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="TrackTime.Views.CustomerListView">
   <Grid ColumnDefinitions="*" RowDefinitions="Auto,*">
     <TextBlock Text="Customers" FontSize="20" Grid.Row="0" HorizontalAlignment="Center" Margin="5"/>
-    <ListBox x:Name="CustomerList" Grid.Row="1"/>
+    <Button x:Name="CreateButton" HorizontalAlignment="Right">
+      <Image  Width="24" Height="24" Source="{StaticResource AddButtonImage}"/>
+    </Button>
+    <ListBox x:Name="CustomerList" Grid.Row="1">
+      <ListBox.ItemTemplate>
+        <DataTemplate>
+          <rxui:ViewModelViewHost ViewModel="{Binding}"/>
+        </DataTemplate>
+      </ListBox.ItemTemplate>
+    </ListBox>
   </Grid>
 </UserControl>

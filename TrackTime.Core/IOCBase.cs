@@ -40,9 +40,15 @@ namespace TrackTime
 
         protected virtual void RegisterViewModels()
         {
-            Container.Register<CustomerViewModel>(() => new CustomerViewModel(() => GetService<ICustomerModelService>()));
-            Container.Register<WorkItemViewModel>(() => new WorkItemViewModel(() => GetService<IWorkItemModelService>()));
-            Container.Register<TimeEntryViewModel>(() => new TimeEntryViewModel(() => GetService<ITimeEntryModelService>()));
+            Container.Register<CustomerViewModel>(() => new CustomerViewModel(
+                () => GetService<ICustomerModelService>(),
+                GetService<IDialogService>()));
+            Container.Register<WorkItemViewModel>(() => new WorkItemViewModel(
+                () => GetService<IWorkItemModelService>(),
+                GetService<IDialogService>()));
+            Container.Register<TimeEntryViewModel>(() => new TimeEntryViewModel(
+                () => GetService<ITimeEntryModelService>(),
+                GetService<IDialogService>()));
 
             //Container.Register<Func<CustomerViewModel>>(() => () => GetService<CustomerViewModel>());
             //Container.Register<Func<WorkItemViewModel>>(() => () => GetService<WorkItemViewModel>());
@@ -81,12 +87,12 @@ namespace TrackTime
         }
 
 
-        private void RegisterOtherServices()
+        protected static void RegisterOtherServices()
         {
 
         }
 
-        private void RegisterModelServices()
+        protected void RegisterModelServices()
         {
             Container.Register<ICustomerModelService>(() => new CustomerModelService(GetService<IAppDataContext>()));
             Container.Register<IWorkItemModelService>(() => new WorkItemModelService(GetService<IAppDataContext>()));
@@ -98,7 +104,7 @@ namespace TrackTime
             //Container.Register<Func<ITimeEntryModelService>>(() => () => _resolver.GetService<ITimeEntryModelService>());
         }
 
-        private void RegisterDataServices()
+        protected void RegisterDataServices()
         {
             Container.RegisterLazySingleton<IDbPath>(() => new DbPath());
             Container.RegisterLazySingleton<IAppDataContext>(() => new AppDataContext(GetService<IDbPath>()));
