@@ -10,6 +10,7 @@ using System.Reactive.Disposables;
 
 using TrackTime.Data;
 using TrackTime.Models;
+using DynamicData.Binding;
 
 namespace TrackTime.ViewModels
 {
@@ -32,6 +33,9 @@ namespace TrackTime.ViewModels
                     .Skip(1)
                     .InvokeCommand(Load)
                     .DisposeWith(d);
+
+                Load.Execute().Subscribe().DisposeWith(d);
+                ChangeSortOrder(SortExpressionComparer<CustomerViewModel>.Ascending(x => x.Name));
             });
 
         }

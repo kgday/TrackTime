@@ -19,6 +19,7 @@ namespace TrackTime
         {
             base.RegisterViewModels();
             Container.Register(() => new ConfirmationViewModel());
+            Container.Register(() => new MessageBoxViewModel());
         }
 
         protected override void RegisterViews()
@@ -38,6 +39,9 @@ namespace TrackTime
             Container.Register<IViewFor<CustomerListViewModel>>(() => new CustomerListView());
             Container.Register<IViewFor<CustomerViewModel>>(() => new CustomerView());
             Container.Register<IViewFor<WorkItemViewModel>>(() => new WorkItemView());
+
+            Container.Register<IViewFor<ConfirmationViewModel>>(() => new ConfirmationView());
+            Container.Register<IViewFor<MessageBoxViewModel>>(() => new MessageBoxView());
         }
 
         protected override void RegisterViewServices()

@@ -17,6 +17,8 @@ namespace TrackTime.ViewModels
         private readonly Func<IModelServiceBase<TModel>> _modelServiceFactory;
         private bool _isEditing;
 
+        private bool _isNew = true;
+
         public EditableViewModel(Func<IModelServiceBase<TModel>> modelServiceFactory, IDialogService dialogService)
         {
             _modelServiceFactory = modelServiceFactory;
@@ -34,10 +36,10 @@ namespace TrackTime.ViewModels
                 }
                 return Observable.Return<TModel?>(default);
             }, canCancel);
-            CancelEdit                
+            CancelEdit
                 .Subscribe(model =>
                 {
-                    if(model != null)
+                    if (!IsNew && model != null)
                         FromModel(model);
                     IsEditing = false;
                 });
@@ -53,9 +55,9 @@ namespace TrackTime.ViewModels
                 var modelService = _modelServiceFactory();
 
                 if (string.IsNullOrWhiteSpace(Id)) //is adding a new one
-                   return modelService.Add(model).Select(_ => Unit.Default);
+                    return modelService.Add(model).Select(_ => Unit.Default);
                 else
-                   return modelService.Update(model).Select(_ => Unit.Default);
+                    return modelService.Update(model).Select(_ => Unit.Default);
             }, canSave);
             SaveEdits
                 .Subscribe(_ => IsEditing = false);
@@ -75,17 +77,23 @@ namespace TrackTime.ViewModels
                     })
                     .Switch();
             }, canDelete);
-
         }
 
         public bool IsEditing { get => _isEditing; set => this.RaiseAndSetIfChanged(ref _isEditing, value); }
-        
-        public ReactiveCommand<Unit, Unit> Edit { get; }
-                public ReactiveCommand<Unit, TModel?> CancelEdit { get; } //return a fresh model from the model service
-        public ReactiveCommand<Unit, Unit> SaveEdits { get; } 
-        public ReactiveCommand<Unit, bool> Delete { get; }
-        public ValidationContext ValidationContext { get; } = new ();
-        protected abstract string DeleteConfirmationPrompt();
+        public bool IsNew { get => _isNew; set => this.RaiseAndSetIfChanged(ref _isNew, value); }
 
+        public ReactiveCommand<Unit, Unit> Edit { get; }
+        public ReactiveCommand<Unit, TModel?> CancelEdit { get; } //return a fresh model from the model service
+        public ReactiveCommand<Unit, Unit> SaveEdits { get; }
+        public ReactiveCommand<Unit, bool> Delete { get; }
+        public ValidationContext ValidationContext { get; } = new();
+
+        public override void FromModel(TModel model)
+        {
+            base.FromModel(model);
+            IsNew = false;
+        }
+
+        protected abstract string DeleteConfirmationPrompt();
     }
 }

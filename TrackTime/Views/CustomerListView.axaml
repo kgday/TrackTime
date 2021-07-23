@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+<views:CustomerListViewBase xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -11,12 +11,12 @@
     <Button x:Name="CreateButton" HorizontalAlignment="Right">
       <Image  Width="24" Height="24" Source="{StaticResource AddButtonImage}"/>
     </Button>
-    <ListBox x:Name="CustomerList" Grid.Row="1">
-      <ListBox.ItemTemplate>
+    <ListBox x:Name="CustomerList" Grid.Row="1" >
+      <!--<ListBox.ItemTemplate>
         <DataTemplate>
           <rxui:ViewModelViewHost ViewModel="{Binding}"/>
         </DataTemplate>
-      </ListBox.ItemTemplate>
+      </ListBox.ItemTemplate>-->
     </ListBox>
   </Grid>
-</UserControl>
+</views:CustomerListViewBase>

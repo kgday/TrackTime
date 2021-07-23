@@ -13,12 +13,11 @@ using System.Reactive.Disposables;
 
 namespace TrackTime.Views
 {
-    //public class CustomerListViewBase : ReactiveUserControl<CustomerListViewModel> { }
-    public partial class CustomerListView : ReactiveUserControl<CustomerListViewModel>
+    public class CustomerListViewBase : ReactiveUserControl<CustomerListViewModel> { }
+    public partial class CustomerListView : CustomerListViewBase
     {
         public CustomerListView()
         {
-            InitializeComponent();
             this.WhenActivated(d =>
             {
                 this.WhenAnyValue(x => x.ViewModel)
@@ -28,9 +27,11 @@ namespace TrackTime.Views
                     this.OneWayBind(viewModel, vm => vm.ItemList, v => v.CustomerList.Items).DisposeWith(d);
                     this.Bind(ViewModel, vm => vm.SelectedItem, v => v.CustomerList.SelectedItem).DisposeWith(d);
                     this.BindCommand(viewModel, vm => vm.CreateNewItem, v => v.CreateButton).DisposeWith(d);
+                    //viewModel.CreateNewItem.BindTo(this, v=>v.NewItemViewHost.ViewModel).DisposeWith(d);
                 })
                 .DisposeWith(d);
             });
+            InitializeComponent();
         }
 
         //using XamlNameReferenceGenerator which also generates InitializeComponent

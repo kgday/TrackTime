@@ -23,7 +23,7 @@ namespace TrackTime.Data
         {
             if (model == null)
                 throw new ArgumentNullException(nameof(model));
-            model.Id = ObjectId.NewObjectId();
+            model.Id = ModelBase.NewId();
             Collection.Insert(model);
             return model;
         });

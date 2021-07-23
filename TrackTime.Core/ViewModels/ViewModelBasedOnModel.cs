@@ -9,9 +9,9 @@ namespace TrackTime.ViewModels
 {
     public class ViewModelBasedOnModel<TModel> : ViewModelBase where TModel : ModelBase
     {
-        private string? _id;
+        private string _id = string.Empty;
 
-        public string? Id { get => _id; set => this.RaiseAndSetIfChanged(ref _id, value); }
+        public string Id { get => _id; set => this.RaiseAndSetIfChanged(ref _id, value); }
 
         //Assigns same name properties
         public virtual void FromModel(TModel model)
@@ -29,7 +29,7 @@ namespace TrackTime.ViewModels
                     destProp.SetValue(model, srcProp.GetValue(this));
             }
 
-            Id = model.Id?.ToString();
+            Id = model.Id.ToString();
         }
 
         public virtual void ToModel(TModel model)

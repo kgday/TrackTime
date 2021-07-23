@@ -12,7 +12,7 @@ namespace TrackTime.Models
         {
         }
 
-        public ObjectId? Id { get; set; } //is null until added
+        public ObjectId Id { get; set; } = ObjectId.Empty; //is empty until added
 
         public int CompareTo(ModelBase? other)
         {
@@ -42,7 +42,7 @@ namespace TrackTime.Models
 
 
         public static ObjectId NewId() => ObjectId.NewObjectId();
-        public static ObjectId? IdFromString(string? id) => string.IsNullOrWhiteSpace(id) ? default : new(id);
+        public static ObjectId IdFromString(string id) => string.IsNullOrWhiteSpace(id) ? ObjectId.Empty : new(id);
 
         public static bool operator ==(ModelBase? left, ModelBase? right)
         {

@@ -1,4 +1,5 @@
 ﻿using DynamicData;
+using DynamicData.Binding;
 
 using ReactiveUI;
 
@@ -8,6 +9,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reactive;
 using System.Reactive.Linq;
+using System.Reactive.Subjects;
 
 using TrackTime.Data;
 using TrackTime.Models;
@@ -16,9 +18,9 @@ namespace TrackTime.ViewModels
 {
     public abstract class ListViewModel<TModel, TViewModel> : ViewModelBase where TViewModel : EditableViewModel<TModel> where TModel : ModelBase, new()
     {
-        private readonly SourceList<TViewModel> _viewModelsSource;
-        private readonly ReadOnlyObservableCollection<TViewModel> _itemList;
-        private readonly IObservable<IChangeSet<TViewModel>> _viewModelChangeset;
+        private readonly SourceCache<TViewModel, string> _viewModelsSource;
+        private readonly ObservableCollectionExtended<TViewModel> _itemList = new();
+        private readonly IObservable<IChangeSet<TViewModel,string>> _viewModelChangeset;
         private int _itemsPerPage = 50;
         private int _currentPage = 1;
 
@@ -26,18 +28,19 @@ namespace TrackTime.ViewModels
         private readonly ObservableAsPropertyHelper<long> _totalItems;
         private readonly ObservableAsPropertyHelper<bool> _hasMultiplePages;
         private TViewModel? _selectedItem;
+        private BehaviorSubject<IComparer<TViewModel>> _sortOrder = new(SortExpressionComparer<TViewModel>.Ascending(x=>x.Id));
 
         public ListViewModel(Func<TViewModel> viewModelFactory)
         {
-            _viewModelsSource = new();
+            _viewModelsSource = new(x=>x.Id);
             _viewModelChangeset = _viewModelsSource
                 .Connect()
-                .ObserveOn(RxApp.MainThreadScheduler)
-                .RefCount();
+                .Sort(_sortOrder);
 
             _viewModelChangeset
-                .Bind(out _itemList)
+                .AutoRefresh()
                 .ObserveOn(RxApp.MainThreadScheduler)
+                .Bind(_itemList)
                 .Subscribe();
 
 
@@ -63,7 +66,7 @@ namespace TrackTime.ViewModels
                     _viewModelsSource.Edit(list =>
                     {
                         list.Clear();
-                        list.Add(response.Results.Select(model =>
+                        list.AddOrUpdate(response.Results.Select(model =>
                         {
                             var vm = viewModelFactory();
                             vm.FromModel(model);
@@ -80,7 +83,7 @@ namespace TrackTime.ViewModels
             });
 
             CreateNewItem
-                .Subscribe(newVm => _viewModelsSource.Add(newVm));
+                .Subscribe(newVm => _viewModelsSource.AddOrUpdate(newVm));
 
             CreateNewItem
                 .WhereNotNull()
@@ -104,7 +107,7 @@ namespace TrackTime.ViewModels
                 .InvokeCommand(Load);
         }
 
-        public ReadOnlyObservableCollection<TViewModel> ItemList => _itemList;
+        public ObservableCollectionExtended<TViewModel> ItemList => _itemList;
         public ReactiveCommand<Unit, ListRetrievalResponse<TModel>> Load { get; }
         public ReactiveCommand<Unit, Unit> FirstPage { get; }
         public ReactiveCommand<Unit, Unit> LastPage { get; }
@@ -118,6 +121,11 @@ namespace TrackTime.ViewModels
         public TViewModel? SelectedItem { get => _selectedItem; set => this.RaiseAndSetIfChanged(ref _selectedItem, value); }
         public ReactiveCommand<Unit, TViewModel> CreateNewItem { get; }
         public ObservableAsPropertyHelper<int> TotalPages1 => _totalPages;
+
+        protected void ChangeSortOrder(IComparer<TViewModel> comparer)
+        {
+            _sortOrder.OnNext(comparer);
+        }
 
         protected abstract IObservable<ListRetrievalResponse<TModel>> DoLoad();
     }

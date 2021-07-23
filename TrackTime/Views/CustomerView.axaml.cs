@@ -37,7 +37,6 @@ namespace TrackTime.Views
                     this.OneWayBind(viewModel, vm => vm.IsEditing, v => v.ViewingGrid.IsVisible, editing => !editing).DisposeWith(d);
                     this.OneWayBind(viewModel, vm => vm.IsEditing, v => v.EditingGrid.IsVisible).DisposeWith(d);
 
-
                     this.Bind(viewModel, vm => vm.Name, v => v.CustomerNameEdit.Text).DisposeWith(d);
                     this.Bind(viewModel, vm => vm.IsActive, v => v.ActiveCheckBox.IsChecked).DisposeWith(d);
                     this.Bind(viewModel, vm => vm.Phone, v => v.PhoneNoEdit.Text).DisposeWith(d);
