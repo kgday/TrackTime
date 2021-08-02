@@ -75,7 +75,8 @@ namespace TrackTime.Views
                 .DisposeWith(_dialogSubscriptions);
 
             return onResult.Select(result => new UIDialogResult<TResult>() { Result = result })
-                .Merge(clickedOnBackground.Select(_ => new UIDialogResult<TResult>() { Cancelled = true }));
+                .Merge(clickedOnBackground.Select(_ => new UIDialogResult<TResult>() { Cancelled = true }))
+                .Take(1);
         }
 
     }

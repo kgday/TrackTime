@@ -26,7 +26,7 @@ namespace TrackTime.ViewModels
             {
                 var destProp = GetType().GetProperty(srcProp.Name);
                 if (destProp != null && srcProp.PropertyType == destProp.PropertyType)
-                    destProp.SetValue(model, srcProp.GetValue(this));
+                    destProp.SetValue(this, srcProp.GetValue(model));
             }
 
             Id = model.Id.ToString();

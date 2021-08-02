@@ -66,5 +66,13 @@ namespace TrackTime.ViewModels
         public ViewModelActivator Activator { get; } = new();
 
         protected override string DeleteConfirmationPrompt() => $"Are you sure you wish to delete customer {Name}?";
+
+        public override string? ToString()
+        {
+            if(string.IsNullOrWhiteSpace(Name))
+                return "Unnamed Customer";
+
+            return $"Customer {Name}";
+        }
     }
 }

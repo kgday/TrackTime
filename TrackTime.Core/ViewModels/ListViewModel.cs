@@ -5,7 +5,6 @@ using ReactiveUI;
 
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reactive;
 using System.Reactive.Linq;
@@ -20,29 +19,31 @@ namespace TrackTime.ViewModels
     {
         private readonly SourceCache<TViewModel, string> _viewModelsSource;
         private readonly ObservableCollectionExtended<TViewModel> _itemList = new();
-        private readonly IObservable<IChangeSet<TViewModel,string>> _viewModelChangeset;
-        private int _itemsPerPage = 50;
-        private int _currentPage = 1;
-
+        private readonly IObservable<IChangeSet<TViewModel, string>> _viewModelChangeset;
         private readonly ObservableAsPropertyHelper<int> _totalPages;
         private readonly ObservableAsPropertyHelper<long> _totalItems;
         private readonly ObservableAsPropertyHelper<bool> _hasMultiplePages;
+        private int _itemsPerPage = 50;
+        private int _currentPage = 1;
         private TViewModel? _selectedItem;
-        private BehaviorSubject<IComparer<TViewModel>> _sortOrder = new(SortExpressionComparer<TViewModel>.Ascending(x=>x.Id));
+        private string? _justAddedId;
+        private BehaviorSubject<IComparer<TViewModel>> _sortOrder = new(SortExpressionComparer<TViewModel>.Ascending(x => x.Id));
+
+        private TViewModel? _newItem;
 
         public ListViewModel(Func<TViewModel> viewModelFactory)
         {
-            _viewModelsSource = new(x=>x.Id);
+            _viewModelsSource = new(x => x.Id);
             _viewModelChangeset = _viewModelsSource
                 .Connect()
-                .Sort(_sortOrder);
+                .Sort(_sortOrder)
+                .RefCount();
 
             _viewModelChangeset
                 .AutoRefresh()
                 .ObserveOn(RxApp.MainThreadScheduler)
                 .Bind(_itemList)
                 .Subscribe();
-
 
             Load = ReactiveCommand.CreateFromObservable(() => DoLoad());
             _totalItems = Load
@@ -73,7 +74,12 @@ namespace TrackTime.ViewModels
                             return vm;
                         }));
                     });
-                    SelectedItem = ItemList.FirstOrDefault();
+
+                    SelectedItem = null;
+                    if (!string.IsNullOrWhiteSpace(_justAddedId))
+                        SelectedItem = ItemList.FirstOrDefault(x => x.Id == _justAddedId);
+                    if (SelectedItem == null)
+                        SelectedItem = ItemList.FirstOrDefault();
                 });
 
             CreateNewItem = ReactiveCommand.CreateFromObservable(() =>
@@ -83,13 +89,44 @@ namespace TrackTime.ViewModels
             });
 
             CreateNewItem
-                .Subscribe(newVm => _viewModelsSource.AddOrUpdate(newVm));
+                .Subscribe(newVm => NewItem = newVm);
 
+            //when canceling or saving remove the new item
             CreateNewItem
                 .WhereNotNull()
-                .Select(newItem => newItem.WhenAnyValue(x => x.CancelEdit).Select(_ => newItem))
+                .Select(newItem => newItem.CancelEdit.Select(_ => newItem))
                 .Switch()
-                .Subscribe(newItem => _viewModelsSource.Remove(newItem));
+                .Subscribe(_ => NewItem = null);
+
+            //reload the items when a new item is saved. If we don't the sorting will be out of wack.
+            CreateNewItem
+                .WhereNotNull()
+                .Select(newItem => newItem.SaveEdits.Do(_ => _justAddedId = newItem.Id))
+                .Switch()
+                .Do(_ => NewItem = null)
+                .InvokeCommand(Load);
+
+            _viewModelChangeset
+                .MergeMany(vm => vm.Delete)
+                .Where(deleted => deleted)
+                .Select(_ => Unit.Default)
+                .InvokeCommand(Load);
+
+            ListNotification =
+                _viewModelChangeset
+                .MergeMany(vm => vm.SaveEdits.Select(_ => vm))
+                .Select(vm =>
+                {
+                    return vm.IsNew
+                        ? $"{vm} was successfully created in the database."
+                        : $"{vm} was successfully saved";
+                })
+                .Merge(
+                        _viewModelChangeset
+                        .MergeMany(vm => vm.Delete.Select(_ => vm))
+                        .Select(vm => $"{vm} deleted")
+                       )
+                .Select(message => new NotificationSuccessViewModel(message));
 
             var canGotoFirst = this.WhenAnyValue(x => x.CurrentPage).Select(page => page > 1);
             FirstPage = ReactiveCommand.Create(() => { CurrentPage = 1; }, canGotoFirst);
@@ -105,6 +142,20 @@ namespace TrackTime.ViewModels
 
             Observable.Merge(FirstPage, LastPage, NextPage, PreviousPage)
                 .InvokeCommand(Load);
+
+            this.WhenAnyValue(x => x.SelectedItem)
+                .Subscribe(selected =>
+                {
+                    foreach (var item in ItemList)
+                        item.IsSelected = item == selected;
+                });
+
+            //_viewModelChangeset
+            //    .ToCollection()
+            //    .Select(list => list.Select(vm => vm.Delete).Merge())
+            //    .Switch()
+            //    .Select(_ => Unit.Default)
+            //    .InvokeCommand(Load);
         }
 
         public ObservableCollectionExtended<TViewModel> ItemList => _itemList;
@@ -119,8 +170,10 @@ namespace TrackTime.ViewModels
         public long TotalItems => _totalItems.Value;
         public bool HasMultiplePages => _hasMultiplePages.Value;
         public TViewModel? SelectedItem { get => _selectedItem; set => this.RaiseAndSetIfChanged(ref _selectedItem, value); }
+        public TViewModel? NewItem { get => _newItem; set => this.RaiseAndSetIfChanged(ref _newItem, value); }
         public ReactiveCommand<Unit, TViewModel> CreateNewItem { get; }
         public ObservableAsPropertyHelper<int> TotalPages1 => _totalPages;
+        public IObservable<NotificationViewModel> ListNotification { get; }
 
         protected void ChangeSortOrder(IComparer<TViewModel> comparer)
         {

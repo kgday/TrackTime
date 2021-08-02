@@ -19,6 +19,8 @@ namespace TrackTime.ViewModels
 
         private bool _isNew = true;
 
+        private bool _isSelected;
+
         public EditableViewModel(Func<IModelServiceBase<TModel>> modelServiceFactory, IDialogService dialogService)
         {
             _modelServiceFactory = modelServiceFactory;
@@ -55,7 +57,7 @@ namespace TrackTime.ViewModels
                 var modelService = _modelServiceFactory();
 
                 if (string.IsNullOrWhiteSpace(Id)) //is adding a new one
-                    return modelService.Add(model).Select(_ => Unit.Default);
+                    return modelService.Add(model).Do(model => FromModel(model)).Select(_ => Unit.Default);
                 else
                     return modelService.Update(model).Select(_ => Unit.Default);
             }, canSave);
@@ -81,6 +83,7 @@ namespace TrackTime.ViewModels
 
         public bool IsEditing { get => _isEditing; set => this.RaiseAndSetIfChanged(ref _isEditing, value); }
         public bool IsNew { get => _isNew; set => this.RaiseAndSetIfChanged(ref _isNew, value); }
+        public bool IsSelected { get => _isSelected; set => this.RaiseAndSetIfChanged(ref _isSelected, value); }
 
         public ReactiveCommand<Unit, Unit> Edit { get; }
         public ReactiveCommand<Unit, TModel?> CancelEdit { get; } //return a fresh model from the model service

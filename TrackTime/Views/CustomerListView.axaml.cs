@@ -28,6 +28,18 @@ namespace TrackTime.Views
                     this.Bind(ViewModel, vm => vm.SelectedItem, v => v.CustomerList.SelectedItem).DisposeWith(d);
                     this.BindCommand(viewModel, vm => vm.CreateNewItem, v => v.CreateButton).DisposeWith(d);
                     //viewModel.CreateNewItem.BindTo(this, v=>v.NewItemViewHost.ViewModel).DisposeWith(d);
+                    viewModel
+                        .ListNotification
+                        .BindTo(this, vm => vm.NotificationHost.ViewModel)
+                        .DisposeWith(d);
+                    viewModel
+                        .ListNotification
+                        .Select(_ => Observable.Timer(TimeSpan.FromSeconds(3)))
+                        .Switch()
+                        .ObserveOn(RxApp.MainThreadScheduler)
+                        .Subscribe(_=> NotificationHost.ViewModel = null)
+                        .DisposeWith(d);
+                    this.OneWayBind(viewModel, vm => vm.NewItem, v => v.NewItemHost.ViewModel).DisposeWith(d);
                 })
                 .DisposeWith(d);
             });

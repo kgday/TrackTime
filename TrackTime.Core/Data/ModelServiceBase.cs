@@ -35,7 +35,7 @@ namespace TrackTime.Data
             if (string.IsNullOrWhiteSpace(id))
                 throw new ArgumentNullException(nameof(id));
             var objId = new ObjectId(id);
-            return Observable.Start(() => Collection.Delete(id));
+            return Observable.Start(() => Collection.Delete(objId));
         }
 
 

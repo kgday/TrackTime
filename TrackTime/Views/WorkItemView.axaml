@@ -3,7 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:views="using:TrackTime.Views"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             mc:Ignorable="d" d:DesignWidth="500"
              x:Class="TrackTime.Views.WorkItemView">
   <UserControl.Styles>
     <Style Selector="TextBlock">
@@ -15,53 +15,108 @@
       <Setter Property="HorizontalAlignment" Value="Stretch"/>
     </Style>
   </UserControl.Styles>
-  <Grid Margin="5" RowDefinitions="*,*">
-    <Grid x:Name="ViewingGrid" ColumnDefinitions="*,2*,Auto" RowDefinitions="Auto,Auto,*,Auto" >
-      <TextBlock x:Name="CustomerNameText" Grid.Column="0" Grid.ColumnSpan="2" Text="Customer Name" FontSize="16"/>
-      <TextBlock x:Name="ActiveIndicator" Text="Active" HorizontalAlignment="Right" Grid.Column="2" Foreground="Red"/>
-      <TextBlock x:Name="InActiveIndicator" Text="InActive" HorizontalAlignment="Right" Grid.Column="2" Foreground="DarkGray"/>
-      <DockPanel  Grid.Row="1" >
-        <TextBlock Text="Ph:" Margin="0,0,4,0" />
-        <TextBlock x:Name="PhoneNoText" Text="0987 2345689" />
-      </DockPanel>
-      <DockPanel  Grid.Row="1" Grid.Column="1">
-        <TextBlock Text="Email:" Margin="0,0,4,0"/>
-        <TextBlock x:Name="EmailText" Text="joe@smithEnterprises.com"/>
-      </DockPanel>
-      <TextBlock x:Name="Notes" TextWrapping="WrapWithOverflow" Grid.ColumnSpan="2" Grid.Row="2" Text="This is some generous text allowing for long Notes. In practice, I don't kow how long."/>
-      <StackPanel Grid.Row="3" Grid.ColumnSpan="3" Orientation="Horizontal" HorizontalAlignment="Right">
-        <Button x:Name="DeleteButton" BorderThickness="0" Background="Transparent">
-          <Image Width="24" Height="24" Source="{StaticResource DeleteButtonImage}"/>
-        </Button>
-        <Button x:Name="EditButton" BorderThickness="0" Background="Transparent">
-          <Image Width="24" Height="24" Source="{StaticResource EditButtonImage}"/>
-        </Button>
-      </StackPanel>
-    </Grid>
+  <Border x:Name="OuterBorder" Grid.Row="2"  Background="White" CornerRadius="5" BorderBrush="Black" BorderThickness="1" Classes="NewItem">
+    <Grid Margin="5" RowDefinitions="*,*">
+      <Grid x:Name="ViewingGrid"  IsVisible="True" ColumnDefinitions="*,Auto">
+        <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto,Auto,Auto" RowDefinitions="Auto,Auto,Auto,*"  Grid.Column="0">
+          <TextBlock x:Name="WorkItemTitleText" Grid.Column="0" Text="Work Item Title" FontSize="14" />
+          <Panel x:Name="CompletedIndicator" ToolTip.Tip="Completed" Grid.Column="1" Margin="3">
+            <Image  Width="18" Height="18" >
+              <Image.Source>
+                <DrawingImage >
+                  <GeometryDrawing  Brush="Green" Geometry="F1M223.137451171875,-330.317749023438C224.811538696289,-330.424591064453,226.504547119141,-330.363342285156,228.191757202148,-330.127380371094C234.940612792969,-329.183471679688,241.011672973633,-325.525512695313,245,-320L250,-314 217.75,-273.5 205.5,-289.75C201.305740356445,-294.914855957031,199.343276977539,-301.538543701172,200.047103881836,-308.154571533203C200.750946044922,-314.770599365234 204.063003540039,-320.833190917969 209.25,-325 213.263412475586,-328.164459228516 218.115219116211,-329.997314453125 223.137451171875,-330.317749023438z M526.939147949219,-450.072540283203C531.850952148438,-449.686767578125,536.579467773438,-447.853851318359,540.5,-444.75C545.843200683594,-440.809143066406,549.399353027344,-434.904724121094,550.384216308594,-428.338897705078C551.369140625,-421.773040771484,549.701782226563,-415.085113525391,545.75,-409.75L350,-159.75C345.283813476563,-153.78157043457 338.106781005859,-150.285079956055 330.5,-150.25 322.935302734375,-150.22428894043 315.765777587891,-153.625228881836 311,-159.5L283.5,-193.75 315,-234.25 330.25,-215.5 505.25,-440.5C509.343872070313,-445.762298583984,515.370178222656,-449.171356201172,521.989501953125,-449.969421386719C523.644287109375,-450.1689453125,525.301940917969,-450.201141357422,526.939147949219,-450.072540283203z M401.939208984375,-450.072540283203C406.850952148438,-449.686767578125,411.579498291016,-447.853851318359,415.5,-444.75C420.915924072266,-440.805328369141,424.521759033203,-434.851806640625,425.5087890625,-428.224700927734C426.495788574219,-421.597625732422,424.781372070313,-414.851715087891,420.75,-409.5L225,-159.5C220.016479492188,-153.176956176758 212.292846679688,-149.640838623047 204.25,-150 196.685287475586,-149.97428894043 189.515747070313,-153.375228881836 184.75,-159.25L80.5,-288.75C74.5791549682617,-295.683898925781 72.9028167724609,-305.291320800781 76.1255950927734,-313.820648193359 79.3483734130859,-322.349945068359 86.9591064453125,-328.448303222656 95.9858245849609,-329.734283447266C105.012542724609,-331.020294189453,114.02352142334,-327.289947509766,119.5,-320L205.25,-215.5 380.25,-440.5C384.343902587891,-445.762298583984,390.370208740234,-449.171356201172,396.989501953125,-449.969421386719C398.644348144531,-450.1689453125,400.301940917969,-450.201141357422,401.939208984375,-450.072540283203z"   />
+                </DrawingImage>
+              </Image.Source>
+            </Image>
+          </Panel>
+          <Panel x:Name="InProgressIndicator" ToolTip.Tip="In Progress" Grid.Column="2" Margin="3">
+            <Image  Width="18" Height="18" >
+              <Image.Source>
+                <DrawingImage >
+                  <GeometryDrawing Brush="#FF000000" Geometry="M18,5H2C0.9,5,0,5.9,0,7v6c0,1.1,0.9,2,2,2h16c1.1,0,2-0.9,2-2V7C20,5.9,19.1,5,18,5z M18,13H2V7h16V13z M7,8H3v4h4V8z   M12,8H8v4h4V8z"   />                </DrawingImage>
+              </Image.Source>
+            </Image>
+          </Panel>
+          <Panel x:Name="FixedPriceIndicator" ToolTip.Tip="Is Fixed Price" Grid.Column="3" Margin="3">
+            <Image  Width="18" Height="18" >
+              <Image.Source>
+                <DrawingImage >
+                  <GeometryDrawing  Brush="#FF000000" Geometry="F1M256,-341C303,-341 341,-303 341,-256 341,-209 303,-171 256,-171 209,-171 171,-209 171,-256 171,-303 209,-341 256,-341z M256,-405C173,-405 107,-339 107,-256 107,-173 173,-107 256,-107 339,-107 405,-173 405,-256 405,-339 339,-405 256,-405z M235,-491L277,-491 277,-447C366,-437,437,-366,447,-277L491,-277 491,-235 447,-235C437,-146,366,-75,277,-65L277,-21.0000038146973 235,-21.0000038146973 235,-65C146,-75,75,-146,65,-235L21.0000038146973,-235 21.0000038146973,-277 65,-277C75,-366,146,-437,235,-447L235,-491z"   />
+                </DrawingImage>
+              </Image.Source>
+            </Image>
+          </Panel>
+          <Panel x:Name="NotBillableIndicator"  Grid.Column="4" Margin="3" ToolTip.Tip="Not to be billed">
+            <Image Width="18" Height="18">
+              <Image.Source>
+                <DrawingImage >
+                  <GeometryDrawing  Brush="#FF000000" Geometry="M 39.9317,58.3617L 34.9282,58.3617L 34.9282,53.5994C 33.2003,53.5096 31.5894,53.2632 30.0958,52.8601C 28.6021,52.4569 27.4094,51.9849 26.5176,51.4439L 28.004,45.527C 29.0485,46.1374 30.2723,46.6613 31.6755,47.0986C 33.0786,47.5359 34.6009,47.7647 36.2423,47.785C 37.7444,47.7775 38.9896,47.4974 39.9779,46.9446C 40.9661,46.3919 41.4785,45.6114 41.515,44.6032C 41.5111,43.6442 41.0219,42.8167 40.0474,42.1206C 39.0728,41.4246 37.636,40.7639 35.7369,40.1384C 33.0384,39.25 30.8876,38.076 29.2847,36.6167C 27.6817,35.1573 26.8607,33.2007 26.8217,30.747C 26.8327,28.4387 27.5742,26.4853 29.046,24.8868C 30.5179,23.2883 32.6538,22.2213 35.4538,21.6859L 35.4538,16.8783L 40.4195,16.8783L 40.4195,21.3317C 42.082,21.395 43.5073,21.5847 44.6955,21.901C 45.8837,22.2172 46.8926,22.5841 47.7221,23.0015L 46.2442,28.7456C 45.6405,28.4013 44.7296,28.0248 43.5116,27.616C 42.2936,27.2073 40.6959,26.9847 38.7187,26.9483C 37.0998,26.9804 35.9625,27.2885 35.3066,27.8726C 34.6508,28.4567 34.3347,29.124 34.3583,29.8746C 34.3385,30.6754 34.8239,31.4088 35.8143,32.0749C 36.8047,32.741 38.4191,33.4616 40.6573,34.2367C 43.6669,35.2898 45.8259,36.5835 47.1343,38.1177C 48.4428,39.652 49.0819,41.5743 49.0517,43.8847C 49.0508,46.2045 48.2891,48.2067 46.7665,49.8912C 45.2439,51.5757 42.9656,52.6781 39.9317,53.1984L 39.9317,58.3617 Z M 64.7795,60.5369C 63.4888,62.069 62.069,63.4888 60.5369,64.7795L 46.9073,51.15C 47.5071,50.7466 48.0376,50.2898 48.4988,49.7796C 49.4561,48.7205 50.1126,47.5359 50.4683,46.2257L 64.7795,60.5369 Z M 11.2205,15.4631C 12.5112,13.931 13.931,12.5112 15.4631,11.2205L 28.1548,23.9122L 27.5284,24.5252C 26.2306,25.9346 25.7507,27.87 25.5886,29.8313L 11.2205,15.4631 Z "   />
+                </DrawingImage>
+              </Image.Source>
+            </Image>
+          </Panel>
+          <Panel x:Name="BilledIndicator"  Grid.Column="5" Margin="3" ToolTip.Tip="Billed">
+            <Image Width="18" Height="18">
+              <Image.Source>
+                <DrawingImage >
+                  <GeometryDrawing  Brush="Green" Geometry="M 38 18 C 26.9543 18 18 26.9543 18 38 C 18 49.0457 26.9543 58 38 58 C 43.5228 58 48.523378 55.761878 52.142578 52.142578 C 55.761878 48.523378 58 43.5229 58 38 C 58 26.9543 49.0457 18 38 18 z M 38 24 C 45.732 24 52 30.268 52 38 C 52 41.866 50.433891 45.366891 47.900391 47.900391 C 45.366891 50.433891 41.866 52 38 52 C 30.268 52 24 45.732 24 38 C 24 30.268 30.268 24 38 24 z M 37.240234 27.289062 L 37.240234 29.449219 C 35.795234 29.589219 34.633359 30.089872 33.755859 30.951172 C 32.878359 31.812372 32.439453 32.857031 32.439453 34.082031 C 32.439453 35.219531 32.778125 36.184062 33.453125 36.976562 C 34.128125 37.769062 35.390234 38.504141 37.240234 39.181641 L 37.240234 43.609375 C 36.515234 43.559375 35.691278 43.366797 34.767578 43.029297 C 33.843778 42.691797 33.147188 42.324688 32.679688 41.929688 L 32.679688 45.173828 C 34.087187 45.883828 35.607734 46.2425 37.240234 46.25 L 37.240234 48.650391 L 38.919922 48.650391 L 38.919922 46.177734 C 40.462422 46.007834 41.647762 45.529034 42.476562 44.740234 C 43.305262 43.951534 43.720703 42.913047 43.720703 41.623047 C 43.720703 40.505547 43.347216 39.552472 42.603516 38.763672 C 41.859716 37.974972 40.632422 37.274609 38.919922 36.662109 L 38.919922 32.089844 C 40.252422 32.234844 41.452031 32.634062 42.519531 33.289062 L 42.519531 30.185547 C 41.727031 29.740547 40.527422 29.477891 38.919922 29.400391 L 38.919922 27.289062 L 37.240234 27.289062 z M 37.240234 32.138672 L 37.240234 35.970703 C 36.120234 35.415703 35.560547 34.723125 35.560547 33.890625 C 35.560547 32.925625 36.120234 32.341172 37.240234 32.138672 z M 38.919922 39.851562 C 40.039922 40.359062 40.599609 41.014453 40.599609 41.814453 C 40.599609 42.801953 40.039922 43.384453 38.919922 43.564453 L 38.919922 39.851562 z "   />
+                </DrawingImage>
+              </Image.Source>
+            </Image>
+          </Panel>
+          <Panel x:Name="NotBilledIndicator"  Grid.Column="6" Margin="3" ToolTip.Tip="Not Billed">
+            <Image Width="18" Height="18" >
+              <Image.Source>
+                <DrawingImage >
+                  <GeometryDrawing  Brush="Gray" Geometry="M 38 18 C 26.9543 18 18 26.9543 18 38 C 18 49.0457 26.9543 58 38 58 C 43.5228 58 48.523378 55.761878 52.142578 52.142578 C 55.761878 48.523378 58 43.5229 58 38 C 58 26.9543 49.0457 18 38 18 z M 38 24 C 45.732 24 52 30.268 52 38 C 52 41.866 50.433891 45.366891 47.900391 47.900391 C 45.366891 50.433891 41.866 52 38 52 C 30.268 52 24 45.732 24 38 C 24 30.268 30.268 24 38 24 z M 37.240234 27.289062 L 37.240234 29.449219 C 35.795234 29.589219 34.633359 30.089872 33.755859 30.951172 C 32.878359 31.812372 32.439453 32.857031 32.439453 34.082031 C 32.439453 35.219531 32.778125 36.184062 33.453125 36.976562 C 34.128125 37.769062 35.390234 38.504141 37.240234 39.181641 L 37.240234 43.609375 C 36.515234 43.559375 35.691278 43.366797 34.767578 43.029297 C 33.843778 42.691797 33.147188 42.324688 32.679688 41.929688 L 32.679688 45.173828 C 34.087187 45.883828 35.607734 46.2425 37.240234 46.25 L 37.240234 48.650391 L 38.919922 48.650391 L 38.919922 46.177734 C 40.462422 46.007834 41.647762 45.529034 42.476562 44.740234 C 43.305262 43.951534 43.720703 42.913047 43.720703 41.623047 C 43.720703 40.505547 43.347216 39.552472 42.603516 38.763672 C 41.859716 37.974972 40.632422 37.274609 38.919922 36.662109 L 38.919922 32.089844 C 40.252422 32.234844 41.452031 32.634062 42.519531 33.289062 L 42.519531 30.185547 C 41.727031 29.740547 40.527422 29.477891 38.919922 29.400391 L 38.919922 27.289062 L 37.240234 27.289062 z M 37.240234 32.138672 L 37.240234 35.970703 C 36.120234 35.415703 35.560547 34.723125 35.560547 33.890625 C 35.560547 32.925625 36.120234 32.341172 37.240234 32.138672 z M 38.919922 39.851562 C 40.039922 40.359062 40.599609 41.014453 40.599609 41.814453 C 40.599609 42.801953 40.039922 43.384453 38.919922 43.564453 L 38.919922 39.851562 z "   />
+                </DrawingImage>
+              </Image.Source>
+            </Image>
+          </Panel>
+          <StackPanel Orientation="Horizontal" Grid.Row="1">
+             <TextBlock>Dated</TextBlock>
+             <TextBlock x:Name="DateCreatedText" Margin="3,0" Text="15/10/2021"/>
+             <TextBlock Margin="3,0">Due</TextBlock>
+             <TextBlock x:Name="DateDueText" Text="18/10/2021"/>
+          </StackPanel>
+          <TextBlock x:Name="DescriptionText" TextWrapping="WrapWithOverflow" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="2" Text="Description" />
+          <TextBlock x:Name="BodyText" TextWrapping="WrapWithOverflow" Grid.ColumnSpan="3" Grid.Row="3" Text="Body"/>
+        </Grid>
+        <Grid x:Name="ButtonPanel" VerticalAlignment="Bottom" ColumnDefinitions="Auto,Auto" Grid.Column="1"  Margin="5,0,0,0" >
+          <Button x:Name="DeleteButton" BorderThickness="0" Background="Transparent" Padding="0">
+            <Image Width="21" Height="21" Source="{StaticResource DeleteButtonImage}"/>
+          </Button>
+          <Button x:Name="EditButton" BorderThickness="0" Background="Transparent" Padding="0" Grid.Column="1" >
+            <Image Width="18" Height="18" Source="{StaticResource EditButtonImage}"/>
+          </Button>
+        </Grid>
+      </Grid>
 
-    <Grid x:Name="EditingGrid" ColumnDefinitions="*,2*,Auto" RowDefinitions="Auto,Auto,*,Auto,Auto" Grid.Row="1">
-      <TextBox x:Name="CustomerNameEdit" Grid.Column="0" Grid.ColumnSpan="2" FontSize="16" Watermark="Customer Name"/>
-      <CheckBox x:Name="ActiveCheckBox" IsChecked="true" HorizontalAlignment="Right" Grid.Column="2" Margin="5,0,5,0">Active</CheckBox>
-      <DockPanel  Grid.Row="1" Margin="0,1,2,0">
-        <TextBlock Text="Ph:" Margin="0,0,2,0" DockPanel.Dock="Left" />
-        <TextBox x:Name="PhoneNoEdit" Watermark="Phone No" DockPanel.Dock="Right"/>
-      </DockPanel>
-      <DockPanel  Grid.Row="1" Grid.Column="1" Margin="3,1,0,0" Grid.ColumnSpan="2">
-        <TextBlock Text="Email:" Margin="0,0,2,0"/>
-        <TextBox x:Name="EmailEdit" Watermark="Email"/>
-      </DockPanel>
-      <TextBox x:Name="NotesEdit" TextWrapping="WrapWithOverflow" Margin="0,1,0,0"
-               Grid.ColumnSpan="3" Grid.Row="2" Watermark="Notes" MinHeight="60"/>
-      <TextBlock x:Name="ErrorText" Grid.Row="3" Grid.ColumnSpan="3" Text="Error" Margin="5" Foreground="Red" TextWrapping="WrapWithOverflow"/>
-      <StackPanel Grid.Row="4" Grid.ColumnSpan="3" Orientation="Horizontal" HorizontalAlignment="Right">
-        <Button x:Name="SaveButton" BorderThickness="0" Background="Transparent">
-          <Image Width="24" Height="24" Source="{StaticResource SaveEditButtonImage}"/>
-        </Button>
-        <Button x:Name="CancelButton" BorderThickness="0" Background="Transparent">
-          <Image Width="24" Height="24" Source="{StaticResource CancelEditButtonImage}"/>
-        </Button>
-      </StackPanel>
-    </Grid>
+      <Grid x:Name="EditingGrid" ColumnDefinitions="*" RowDefinitions="Auto,Auto,Auto,*,Auto" Grid.Row="1" IsVisible="True">
+        <TextBox x:Name="WorkItemTitleEdit"  FontSize="16" Watermark="Work Item Title"/>        
+        <TextBox x:Name="WorkItemDescriptionEdit"  Grid.Row="1" Watermark="Description"/>
+        <WrapPanel Orientation="Horizontal" Grid.Row="2"  >
+          <CheckBox x:Name="IsFixedPriceCheckBox" IsChecked="true" Margin="10,0" >Is Fixed Price</CheckBox>
+          <CheckBox x:Name="IsBillableCheckBox" IsChecked="true"  Margin="10,0" Grid.Row="2" >Is Billable</CheckBox>
+          <CheckBox x:Name="IsCompletedCheckBox" IsChecked="true"  Margin="10,0" Grid.Row="2" >Been Completed</CheckBox>
+          <CheckBox x:Name="HasBeenBilledCheckBox" IsChecked="true"  Margin="10,0" Grid.Row="2" >Been Billed</CheckBox> 
+        </WrapPanel>
 
-  </Grid>
+
+        <TextBox x:Name="BodyEdit" TextWrapping="WrapWithOverflow" Margin="0,1,0,0"
+                  Grid.Row="3" Watermark="Details" MinHeight="60"/>
+        <DockPanel  Grid.Row="4" >
+          <StackPanel   Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Bottom">
+            <Button x:Name="SaveButton" BorderThickness="0" Background="Transparent">
+              <Image Width="20" Height="20" Source="{StaticResource SaveEditButtonImage}"/>
+            </Button>
+            <Button x:Name="CancelButton" BorderThickness="0" Background="Transparent">
+              <Image Width="20" Height="20" Source="{StaticResource CancelEditButtonImage}"/>
+            </Button>
+          </StackPanel>
+          <TextBlock x:Name="ErrorText" Text="Error" Margin="5" Foreground="Red" TextWrapping="WrapWithOverflow"/>
+        </DockPanel>
+      </Grid>
+    </Grid>
+  </Border>
 </UserControl>

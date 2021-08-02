@@ -29,7 +29,7 @@
           <Border Background="Black" Grid.ColumnSpan="4" CornerRadius="5,5,0,0">
             <TextBlock x:Name="DialogCaptionText" Text="Delete Confirmaion" Margin="5" Foreground="White"/>
           </Border>
-            <rxui:ViewModelViewHost x:Name="DialogHost" Margin="5"/>
+            <rxui:ViewModelViewHost x:Name="DialogHost" Margin="5" Grid.Row="1"/>
         </Grid>
       </Border>
     </Border>

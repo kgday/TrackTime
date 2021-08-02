@@ -42,6 +42,7 @@ namespace TrackTime
 
             Container.Register<IViewFor<ConfirmationViewModel>>(() => new ConfirmationView());
             Container.Register<IViewFor<MessageBoxViewModel>>(() => new MessageBoxView());
+            Container.Register<IViewFor<NotificationSuccessViewModel>>(() => new NotificationSuccessView());
         }
 
         protected override void RegisterViewServices()

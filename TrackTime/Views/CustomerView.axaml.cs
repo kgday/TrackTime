@@ -45,6 +45,8 @@ namespace TrackTime.Views
                     this.BindValidation(viewModel, v => v.ErrorText.Text).DisposeWith(d);
                     this.BindCommand(viewModel, vm => vm.SaveEdits, v => v.SaveButton).DisposeWith(d);
                     this.BindCommand(viewModel, vm => vm.CancelEdit, v => v.CancelButton).DisposeWith(d);
+                    this.OneWayBind(viewModel, vm => vm.IsNew, v => v.OuterBorder.BorderThickness, isNew => isNew ? new Thickness(1) : new Thickness(0)).DisposeWith(d);
+                    this.OneWayBind(viewModel, vm => vm.IsSelected, v => v.ButtonPanel.IsVisible).DisposeWith(d);
                 })
                 .DisposeWith(d);
             });
