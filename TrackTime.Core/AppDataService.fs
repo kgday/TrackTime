@@ -5,7 +5,7 @@ open DataModels
 
 //AppData is meant to be used within the application - simply supstitution for the app connectDB - for testing use the ..ForDB or ..ToDB .. withDB
 module AppDataService =
-    open AppDataLiteDb
+    open AppDataDonaldSql
 
     let addCustomer = addCustomerToDB connectDB
     let addWorkItem = addWorkItemToDB connectDB

@@ -7,12 +7,6 @@ open Avalonia.Controls
 open System.Threading.Tasks
 
 module Dialog =
-    type Result =
-        | Updated
-        | Created
-        | Deleted
-        | Cancelled
-
     let showErrorMessageDialog owningWindow errorMessageString : Task<unit> =
         Dispatcher.UIThread.InvokeAsync<unit>
             (fun _ ->

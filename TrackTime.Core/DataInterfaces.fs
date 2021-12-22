@@ -10,8 +10,9 @@ module DataInterfaces =
     //type GetOneDBModel<'m> = DBModels.Id -> Result<'m option, Exception>
 
     type ListResults<'a> =
-        { TotalRecords: int64
-          Results: 'a seq}
+        {
+          TotalRecords: int64
+          Results: 'a list}
 
     type PageRequest = { PageNo: int; ItemsPerPage: int }
 

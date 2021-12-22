@@ -5,13 +5,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Users.fs" />
     <EmbeddedResource Include="sampleDbConfig.json" />
     <Compile Include="DataModels.fs" />
     <Compile Include="DataInterfaces.fs" />
     <Compile Include="AppDataSQL.fs" />
     <Compile Include="AppDataService.fs" />
     <Compile Include="Migrations/*.fs" />
-    <Compile Include="Users.fs" />
+    <Compile Remove="Migrations\**" />
+    <EmbeddedResource Remove="Migrations\**" />
     <Compile Include="Library.fs" />
   </ItemGroup>
 
@@ -26,10 +28,5 @@
  
   <ItemGroup>
     <PackageReference Update="FSharp.Core" Version="6.0.1" />
-  </ItemGroup>
-  
- 
-  <ItemGroup>
-    <Folder Include="Migrations\" />
   </ItemGroup>
 </Project>

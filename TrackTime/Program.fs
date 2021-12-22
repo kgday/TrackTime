@@ -5,6 +5,7 @@ open Avalonia.Controls.ApplicationLifetimes
 open Avalonia.FuncUI
 open Serilog
 open Serilog.Configuration
+open Avalonia.Themes.Fluent
 
 
 /// This is your application you can ose the initialize method to load styles
@@ -12,14 +13,15 @@ open Serilog.Configuration
 type App() =
     inherit Application()
     override this.Initialize() =
-        this.Styles.Load "avares://Avalonia.Themes.Default/DefaultTheme.xaml"
-        this.Styles.Load "avares://Avalonia.Themes.Default/Accents/BaseLight.xaml"
-        this.Styles.Load "avares://TrackTime/Styles.xaml"
-
+        this.Styles.Add (FluentTheme(baseUri = null, Mode = FluentThemeMode.Light))
+        this.Styles.Load "avares://TrackTime/Styles.axaml"
+       
     override this.OnFrameworkInitializationCompleted() =
         match this.ApplicationLifetime with
         | :? IClassicDesktopStyleApplicationLifetime as desktopLifetime ->
-            desktopLifetime.MainWindow <- Shell.MainWindow()
+            let mainWindow = Shell.MainWindow()
+            Globals.SetWindowService(mainWindow)
+            desktopLifetime.MainWindow <- mainWindow
         | _ -> ()
 
 module Program =

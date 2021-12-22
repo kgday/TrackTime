@@ -7,9 +7,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="Sample.fs" />
-    <Compile Include="Main.fs" />
+    <None Include="tracktimedb.sql">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <Compile Include="Database.fs" />
+	<None Include="Sample.fs" />
+	<Compile Include="Main.fs" />
   </ItemGroup>
+
+  <ItemGroup />
 
   <ItemGroup>
     <PackageReference Include="Expecto" Version="9.0.4" />

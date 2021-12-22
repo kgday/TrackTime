@@ -2,12 +2,18 @@
 
     <PropertyGroup>
         <TargetFramework>net6.0</TargetFramework>
-        <OutputType>WinExe</OutputType>
+        <OutputType>Exe</OutputType>
     </PropertyGroup>
 
     <ItemGroup>
-        <Compile Include="Materialicon.fs" />
+        <Compile Include="DialogResult.fs" />
+        <Compile Include="Globals.fs" />
         <Compile Include="Dialog.fs" />
+        <Compile Include="Icons.fs" />
+        <Compile Include="ImageButtonContents.fs" />
+        <Compile Include="Materialicon.fs" />
+        <Compile Include="TimeEntryDialog.fs" />
+        <Compile Include="WorkItemDialog.fs" />
         <Compile Include="CustomerDialog.fs" />
         <Compile Include="UserProfiles.fs" />
         <Compile Include="EntryPage.fs" />
@@ -15,8 +21,9 @@
         <Compile Include="Shell.fs" />
         <Compile Include="Program.fs" />
         <AvaloniaResource Include="**\*.xaml" />
-    </ItemGroup>
-    
+		<AvaloniaResource Include="**\*.axaml" />
+	</ItemGroup>
+
     <ItemGroup>
         <PackageReference Include="Avalonia.Desktop" Version="0.10.10" />
         <PackageReference Include="Destructurama.FSharp" Version="1.2.0" />
