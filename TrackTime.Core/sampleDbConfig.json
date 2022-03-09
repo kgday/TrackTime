@@ -1,7 +1,0 @@
-{
-  "dbHost": "localhost",
-  "dbPort": "",
-  "dbName": "tracktimedb",
-  "dbUser": "USER",
-  "dbPassword": "password"
-}

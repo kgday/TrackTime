@@ -1,7 +1,8 @@
 ﻿namespace TrackTime
+open TrackTime.DataModels
 
 type DialogResult =
         | Updated
-        | Created
+        | Created of RecordId
         | Deleted
         | Cancelled

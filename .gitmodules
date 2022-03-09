@@ -1,0 +1,3 @@
+[submodule "Gjallarhorn.Bindable"]
+	path = Gjallarhorn.Bindable
+	url = https://github.com/ReedCopsey/Gjallarhorn.Bindable.git

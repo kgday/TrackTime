@@ -2,8 +2,8 @@
 
 open System
 open System.Linq
+open System.Text
 open System.IO
-open TrackTime
 open DataInterfaces
 open System.Data
 open FSharp.Data
@@ -12,34 +12,22 @@ open FirebirdSql.Data.FirebirdClient
 
 //The building blocks of the data access - which we can unit test
 module AppDataDonaldSql =
-    open FSharp.Data
     open DataModels
-    open Donald.Conection
     open Donald
 
-    type Settings = JsonProvider<"sampleDbConfig.json", EmbeddedResource="TrackTime.Core, TrackTime.Core.sampleDbConfig.json">
 
-    let configfilePathFactory () =
-        let dir =
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData))
-
-        Path.Combine(dir, "TrackTime", "settings.json")
-
-    let GetDbConnStrFromConfig (configfilePath: string) =
-        let settings = Settings.Load(configfilePath)
+    let GetDbConnStrFromSettings (settings: Settings.Settings) =
+        let dbSettings = settings.DBSettings
 
         let dbPort =
-            if settings.DbPort.JsonValue.AsString().Equals("") then
-                //5432 //postgresql
-                3050 //firebird
-            else
-                settings.DbPort.JsonValue.AsInteger()
+            match dbSettings.DbPort with
+            | Some port -> port
+            | None -> 3050
 
         let dbHost =
-            if settings.DbHost.Equals("") then
-                "localhost"
-            else
-                settings.DbHost
+            match dbSettings.DbHost with
+            | Some host -> host
+            | None -> "localhost"
 
         //sprintf //postgresql
         //    "Username=%s;Password=%s;Database=%s;Host=%s;Port=%d;Pooling=true;ConnectionLifetime=60;Application Name=TrackTime"
@@ -48,25 +36,59 @@ module AppDataDonaldSql =
         //    settings.DbName
         //    dbHost
         //    dbPort
+
         sprintf //firebird
             "User=%s;Password=%s;Database=%s;DataSource=%s;Port=%d;Dialect=3;Charset=UTF8;Pooling=true;Connection Lifetime=60"
-            settings.DbUser
-            settings.DbPassword
-            settings.DbName
+            dbSettings.DbUser
+            dbSettings.DbPassword
+            dbSettings.DbName
             dbHost
             dbPort
 
     type GetDbConnection = unit -> FbConnection
-
 
     let getDbConnectionWithConnStr connStr : FbConnection =
         let conn = new FbConnection(connStr)
         conn.TryOpenConnection()
         conn
 
-    let private getConnStr = configfilePathFactory >> GetDbConnStrFromConfig
-    let private connStr = getConnStr()
-    let connectDB() =  getDbConnectionWithConnStr connStr
+    let private getConnStr = Settings.getSettings >> GetDbConnStrFromSettings
+
+    let mutable private connStrCache: string option = None
+
+    let private connStr () =
+        match connStrCache with
+        | Some cs -> cs
+        | None ->
+            let cs = getConnStr ()
+            connStrCache <- Some(cs)
+            cs
+
+    let connectDB = connStr >> getDbConnectionWithConnStr
+
+    let private dbErrorExn operationDescription (err: DbError) =
+        let msg, e =
+            match err with
+            | DbConnectionError connError ->
+                sprintf "Database connection error occured with connection string %s. %s" connError.ConnectionString connError.Error.Message, connError.Error
+            | DbTransactionError tranError ->
+                let stepName =
+                    match tranError.Step with
+                    | TxBegin -> "begin"
+                    | TxCommit -> "commit"
+                    | TxRollback -> "rollback"
+
+                sprintf "Database transaction error occured at transaction %s. %s" stepName tranError.Error.Message, tranError.Error
+            | DbExecutionError execError -> sprintf "Database execution error occured with statement: \n%s\n. %s" execError.Statement execError.Error.Message, execError.Error
+            | DataReaderCastError readerCastError ->
+                sprintf "Database data reader cast error occured with field %s. %s" readerCastError.FieldName readerCastError.Error.Message, readerCastError.Error
+            | DataReaderOutOfRangeError readerRangeError ->
+                sprintf "Database data reader out of range error occured with field %s. %s" readerRangeError.FieldName readerRangeError.Error.Message, readerRangeError.Error
+
+        let combined = String.concat " " [ operationDescription; msg ]
+        (combined, e) |> exn
+
+    let private dbErrorResult operationDescription (err: DbError) = dbErrorExn operationDescription err |> Error
 
     let addCustomerToDB (getDbConnection: GetDbConnection) (model: Customer) =
         try
@@ -115,7 +137,7 @@ module AppDataDonaldSql =
                     match idOption with
                     | Some id -> Ok id
                     | None -> "Error inserting and returning new customer id." |> exn |> Error
-                | Error e -> ($"Error inserting customer and returning new id. {e.Error.Message}", e.Error) |> exn |> Error
+                | Error dberror -> dbErrorResult "Error inserting customer and returning new id." dberror
 
             res
         with
@@ -174,7 +196,7 @@ module AppDataDonaldSql =
                     match idOption with
                     | Some id -> Ok id
                     | None -> "Error inserting and returning new work item id." |> exn |> Error
-                | Error e -> ($"Error inserting work item and returning new id. {e.Error.Message}", e.Error) |> exn |> Error
+                | Error dberror -> dbErrorResult "Error inserting work item and returning new id" dberror
 
             res
         with
@@ -206,7 +228,7 @@ module AppDataDonaldSql =
                                   "TIME_START", SqlType.DateTime(model.TimeStart.ToUniversalTime())
                                   "TIME_END",
                                   match model.TimeEnd with
-                                  | Some dueDate -> SqlType.DateTime(dueDate.ToUniversalTime())
+                                  | Some date -> SqlType.DateTime(date.ToUniversalTime())
                                   | None -> SqlType.Null
                                   "BEEN_BILLED", SqlType.Boolean model.BeenBilled
                                   "NOTES",
@@ -223,7 +245,8 @@ module AppDataDonaldSql =
                 match idOption with
                 | Some id -> Ok id
                 | None -> "Error inserting and returning new time entry id." |> exn |> Error
-            | Error e -> ($"Error inserting time entry and returning new id. {e.Error.Message}", e.Error) |> exn |> Error
+            | Error dberror -> dbErrorResult "Error inserting time entry and returning new id." dberror
+
         with
         | ex -> Error ex
 
@@ -264,7 +287,7 @@ module AppDataDonaldSql =
 
             match qRes with
             | Ok _ -> Ok true
-            | Error e -> ($"Error updating customer. {e.Error.Message}", e.Error) |> exn |> Error
+            | Error dberror -> dbErrorResult "Error updating customer." dberror
         with
         | ex -> Error ex
 
@@ -315,10 +338,7 @@ module AppDataDonaldSql =
 
             match qRes with
             | Ok _ -> Ok true
-            | Error e ->
-                ($"Error updating WORK_ITEM. {e.Error.Message}", e.Error)
-                |> exn
-                |> Error
+            | Error dberror -> dbErrorResult "Error updating WORK_ITEM." dberror
         with
         | ex -> Error ex
 
@@ -358,10 +378,7 @@ module AppDataDonaldSql =
 
             match qRes with
             | Ok _ -> Ok true
-            | Error e ->
-                ($"Error updating time entry table. {e.Error.Message}", e.Error)
-                |> exn
-                |> Error
+            | Error dberror -> dbErrorResult "Error updating time entry table." dberror
         with
         | ex -> Error ex
 
@@ -383,7 +400,7 @@ module AppDataDonaldSql =
 
             match qRes with
             | Ok _ -> Ok true
-            | Error e -> ($"Error deleting customer. {e.Error.Message}", e.Error) |> exn |> Error
+            | Error dberror -> dbErrorResult "Error deleting customer." dberror
         with
         | ex -> Error ex
 
@@ -404,10 +421,7 @@ module AppDataDonaldSql =
 
             match qRes with
             | Ok _ -> Ok true
-            | Error e ->
-                ("Error deleting work item.", e.Error)
-                |> exn
-                |> Error
+            | Error dberror -> dbErrorResult "Error deleting work item." dberror
         with
         | ex -> Error ex
 
@@ -428,25 +442,24 @@ module AppDataDonaldSql =
 
             match qRes with
             | Ok _ -> Ok true
-            | Error e ->
-                ($"Error deleting time entry. {e.Error.Message}", e.Error)
-                |> exn
-                |> Error
+            | Error dberror -> dbErrorResult "Error deleting time entry." dberror
         with
         | ex -> Error ex
 
-    let customerSelectSQl =
+    let private customerSelectSQl =
         "SELECT a.CUSTOMER_ID, a.CUSTOMER_NAME, a.PHONE, a.EMAIL, a.CUSTOMER_STATE,
                                 a.NOTES
                             FROM CUSTOMER a "
 
-    let private customerFromDataReader(rd: IDataReader) : Customer =
-            { CustomerId = "CUSTOMER_ID" |> rd.ReadInt64
-              Name = "CUSTOMER_NAME" |> rd.ReadString |> CustomerName.Create
-              Phone = "PHONE" |> rd.ReadStringOption |> PhoneNoOptional.Create
-              Email = "EMAIL" |> rd.ReadStringOption |> EmailAddressOptional.Create
-              CustomerState = "CUSTOMER_STATE" |> rd.ReadInt32 |> enum<CustomerState>
-              Notes = "NOTES" |> rd.ReadStringOption }
+    let private customerOrderByClause = "a.CUSTOMER_NAME"
+
+    let private customerFromDataReader (rd: IDataReader) : Customer =
+        { CustomerId = "CUSTOMER_ID" |> rd.ReadInt64
+          Name = "CUSTOMER_NAME" |> rd.ReadString |> CustomerName.Create
+          Phone = "PHONE" |> rd.ReadStringOption |> PhoneNoOptional.Create
+          Email = "EMAIL" |> rd.ReadStringOption |> EmailAddressOptional.Create
+          CustomerState = "CUSTOMER_STATE" |> rd.ReadInt32 |> enum<CustomerState>
+          Notes = "NOTES" |> rd.ReadStringOption }
 
 
     let getOneCustomerFromDB (getDbConnection: GetDbConnection) (id: CustomerId) =
@@ -466,10 +479,7 @@ module AppDataDonaldSql =
                 match item with
                 | Some m -> Ok m
                 | None -> $"Unable to find customer with Id {id}" |> exn |> Error
-            | Error e ->
-                ($"Error occured attempting load customer with Id {id}", e.Error)
-                |> exn
-                |> Error
+            | Error dberror -> dbErrorResult $"Error occured attempting load customer with Id {id}" dberror
         with
         | ex -> Error ex
 
@@ -479,18 +489,20 @@ module AppDataDonaldSql =
                                     a.CUSTOMER_ID
                                 FROM WORK_ITEM a "
 
-    let private  workItemFromDataReader(rd: IDataReader) : WorkItem =
-            { WorkItemId = "WORK_ITEM_ID" |> rd.ReadInt64
-              Title = "TITLE" |> rd.ReadString |> WorkItemTitle.Create
-              Description = "DESCRIPTION" |> rd.ReadStringOption |> WorkItemDescriptionOptional.Create
-              IsBillable = "IS_BILLABLE" |> rd.ReadBoolean
-              IsCompleted = "IS_COMPLETED" |> rd.ReadBoolean
-              IsFixedPrice = "IS_FIXED_PRICE" |> rd.ReadBoolean
-              DateCreated = "DATE_CREATED" |> rd.ReadDateTime
-              DueDate = "DUE_DATE" |> rd.ReadDateTimeOption
-              BeenBilled = "BEEN_BILLED" |> rd.ReadBoolean
-              Notes = "NOTES" |> rd.ReadStringOption
-              CustomerId = "CUSTOMER_ID" |> rd.ReadInt64 }
+    let private workItemOrderByClause = "a.DATE_CREATED DESCENDING"
+
+    let private workItemFromDataReader (rd: IDataReader) : WorkItem =
+        { WorkItemId = "WORK_ITEM_ID" |> rd.ReadInt64
+          Title = "TITLE" |> rd.ReadString |> WorkItemTitle.Create
+          Description = "DESCRIPTION" |> rd.ReadStringOption |> WorkItemDescriptionOptional.Create
+          IsBillable = "IS_BILLABLE" |> rd.ReadBoolean
+          IsCompleted = "IS_COMPLETED" |> rd.ReadBoolean
+          IsFixedPrice = "IS_FIXED_PRICE" |> rd.ReadBoolean
+          DateCreated = "DATE_CREATED" |> rd.ReadDateTime
+          DueDate = "DUE_DATE" |> rd.ReadDateTimeOption
+          BeenBilled = "BEEN_BILLED" |> rd.ReadBoolean
+          Notes = "NOTES" |> rd.ReadStringOption
+          CustomerId = "CUSTOMER_ID" |> rd.ReadInt64 }
 
     let getOneWorkItemFromDB (getDbConnection: GetDbConnection) (id: WorkItemId) =
         try
@@ -509,10 +521,7 @@ module AppDataDonaldSql =
                 match item with
                 | Some m -> Ok m
                 | None -> $"Unable to find work item with Id {id}" |> exn |> Error
-            | Error e ->
-                ($"Error occured attempting load work item with Id {id}", e.Error)
-                |> exn
-                |> Error
+            | Error dberror -> dbErrorResult $"Error occured attempting load work item with Id {id}" dberror
         with
         | ex -> Error ex
 
@@ -521,25 +530,26 @@ module AppDataDonaldSql =
                                     a.NOTES, a.WORK_ITEM_ID
                                 FROM TIME_ENTRY a"
 
-    let private timeEntryFromDataReader(rd: FbDataReader) : TimeEntry =
-            { TimeEntryId = "TIME_ENTRY_ID" |> rd.ReadInt64
-              Description = "DESCRIPTION" |> rd.ReadString |> TimeEntryDescription.Create
-              TimeStart = ("TIME_START" |> rd.ReadDateTime).ToLocalTime()
-              TimeEnd =
-                  match ("TIME_END" |> rd.ReadDateTimeOption) with
-                  | Some te -> Some(te.ToLocalTime())
-                  | None -> None
-              BeenBilled = "BEEN_BILLED" |> rd.ReadBoolean
-              IsBillable = "IS_BILLABLE"  |> rd.ReadBoolean
-              Notes = "NOTES" |> rd.ReadStringOption
-              WorkItemId = "WORK_ITEM_ID" |> rd.ReadInt64 }
+    let private timeEntryOrderByClause = "a.TIME_START DESCENDING"
+
+    let private timeEntryFromDataReader (rd: FbDataReader) : TimeEntry =
+        { TimeEntryId = "TIME_ENTRY_ID" |> rd.ReadInt64
+          Description = "DESCRIPTION" |> rd.ReadString |> TimeEntryDescription.Create
+          TimeStart = ("TIME_START" |> rd.ReadDateTime).ToLocalTime()
+          TimeEnd =
+              "TIME_END"
+              |> rd.ReadDateTimeOption
+              |> Option.map (fun te -> te.ToLocalTime())
+          BeenBilled = "BEEN_BILLED" |> rd.ReadBoolean
+          IsBillable = "IS_BILLABLE" |> rd.ReadBoolean
+          Notes = "NOTES" |> rd.ReadStringOption
+          WorkItemId = "WORK_ITEM_ID" |> rd.ReadInt64 }
 
     let getOneTimeEntryFromDB (getDbConnection: GetDbConnection) (id: TimeEntryId) =
         try
             use conn = getDbConnection ()
 
-            let sql =
-                timeEntrySelectSql + " WHERE a.TIME_ENTRY_ID = @TIME_ENTRY_ID"
+            let sql = timeEntrySelectSql + " WHERE a.TIME_ENTRY_ID = @TIME_ENTRY_ID"
 
             let qRes =
                 conn
@@ -551,11 +561,8 @@ module AppDataDonaldSql =
             | Ok item ->
                 match item with
                 | Some m -> Ok m
-                | None -> $"Unable to find time entry with Id {id}" |> exn |> Error
-            | Error e ->
-                ($"Error occured attempting load time entry with Id {id}", e.Error)
-                |> exn
-                |> Error
+                | None -> $"Unable to find time entry with Id {id}." |> exn |> Error
+            | Error dberror -> dbErrorResult $"Error occured attempting load time entry with Id {id}." dberror
         with
         | ex -> Error ex
 
@@ -586,30 +593,30 @@ module AppDataDonaldSql =
 
             match qRes with
             | Ok count -> Ok count
-            | Error e ->
-                ($"Error occured attempting get the customer count", e.Error)
-                |> exn
-                |> Error
+            | Error dberror -> dbErrorResult "Error occured attempting get the customer count." dberror
         with
         | ex -> Error ex
 
+    let sqlPagingClause pageRequest =
+        let pageNo = pageRequest.PageNo - 1
+        let take = pageRequest.ItemsPerPage
+        let skip = pageNo * pageRequest.ItemsPerPage
+        let skipStr = if skip > 0 then $"OFFSET {skip} ROWS" else ""
+        let fetchStr = sprintf "FETCH %s %d ROWS ONLY" (if skip > 0 then "NEXT" else "FIRST") take
+        sprintf "%s %s" skipStr fetchStr
+
     let getCustomersFromDB (getDbConnection: GetDbConnection) (request: PagedCustomersRequest) : Result<ListResults<Customer>, exn> =
         try
-            let pageNo = request.PageRequest.PageNo - 1
-            let take = request.PageRequest.ItemsPerPage
-
-            let skip = pageNo * request.PageRequest.ItemsPerPage
-
             use conn = getDbConnection ()
             let countResult = getCustomerCountFromDB conn request.CustomersRequest
 
             match countResult with
             | Ok count ->
                 if count = 0 then
-                    Ok {TotalRecords = 0; Results = list.Empty }
+                    Ok { TotalRecords = 0; Results = list.Empty }
                 else
                     let where = getCustomerWhere request.CustomersRequest
-                    let sql = AddWhereClauseIfSome customerSelectSQl where
+                    let sql = $"{AddWhereClauseIfSome customerSelectSQl where} ORDER BY {customerOrderByClause} {sqlPagingClause request.PageRequest}"
 
                     let qRes =
                         conn
@@ -618,8 +625,8 @@ module AppDataDonaldSql =
                         |> Db.query customerFromDataReader
 
                     match qRes with
-                    | Ok items -> Ok {TotalRecords = count; Results = items }
-                    | Error e -> ($"Error occured attempting load customers", e.Error) |> exn |> Error
+                    | Ok items -> Ok { TotalRecords = count; Results = items }
+                    | Error dberror -> dbErrorResult "Error occured attempting load customers." dberror
             | Error e -> Error e
 
         with
@@ -642,11 +649,7 @@ module AppDataDonaldSql =
             | Some custId -> Some <| sprintf "(a.CUSTOMER_ID = %d)" custId
             | None -> None
 
-        let is_completedWhere =
-            if request.IncludeCompleted then
-                None
-            else
-                Some "(NOT a.IS_COMPLETED)"
+        let is_completedWhere = if request.IncludeCompleted then None else Some "(NOT a.IS_COMPLETED)"
 
 
         addSQLWhereWithAnd custIdWhere is_completedWhere
@@ -667,31 +670,23 @@ module AppDataDonaldSql =
 
             match qRes with
             | Ok count -> Ok count
-            | Error e ->
-                ($"Error occured attempting get the work item count", e.Error)
-                |> exn
-                |> Error
+            | Error dberror -> dbErrorResult "Error occured attempting get the work item count." dberror
         with
         | ex -> Error ex
 
 
     let getWorkItemsFromDB (getDbConnection: GetDbConnection) (request: PagedWorkItemsRequest) =
         try
-            let pageNo = request.PageRequest.PageNo - 1
-            let take = request.PageRequest.ItemsPerPage
-
-            let skip = pageNo * request.PageRequest.ItemsPerPage
-
             use conn = getDbConnection ()
             let countResult = getWorkItemCountFromDB conn request.WorkItemsRequest
 
             match countResult with
             | Ok count ->
                 if count = 0 then
-                    Ok {TotalRecords = 0; Results = list.Empty }
+                    Ok { TotalRecords = 0; Results = list.Empty }
                 else
                     let where = getWorkItemWhere request.WorkItemsRequest
-                    let sql = AddWhereClauseIfSome workItemSelectSql where
+                    let sql = $"{AddWhereClauseIfSome workItemSelectSql where} ORDER BY {workItemOrderByClause}  {sqlPagingClause request.PageRequest}"
 
                     let qRes =
                         conn
@@ -700,8 +695,8 @@ module AppDataDonaldSql =
                         |> Db.query workItemFromDataReader
 
                     match qRes with
-                    | Ok items -> Ok {TotalRecords = count; Results = items }
-                    | Error e -> ($"Error occured attempting load work items", e.Error) |> exn |> Error
+                    | Ok items -> Ok { TotalRecords = count; Results = items }
+                    | Error dberror -> dbErrorResult "Error occured attempting load work items." dberror
             | Error e -> Error e
 
         with
@@ -728,30 +723,25 @@ module AppDataDonaldSql =
 
             match qRes with
             | Ok count -> Ok count
-            | Error e ->
-                ($"Error occured attempting get the time entry count", e.Error)
-                |> exn
-                |> Error
+            | Error dberror -> dbErrorResult "Error occured attempting get the time entry count" dberror
         with
         | ex -> Error ex
 
     let getTimeEntriesFromDB (getDbConnection: GetDbConnection) (request: PagedTimeEntriesRequest) =
         try
-            let pageNo = request.PageRequest.PageNo - 1
-            let take = request.PageRequest.ItemsPerPage
-
-            let skip = pageNo * request.PageRequest.ItemsPerPage
-
             use conn = getDbConnection ()
             let countResult = getTimeEntryCountFromDB conn request.TimeEntriesRequest
 
             match countResult with
             | Ok count ->
                 if count = 0 then
-                    Ok {TotalRecords = 0; Results = list.Empty }
+                    Ok { TotalRecords = 0; Results = list.Empty }
                 else
                     let where = getTimeEntryWhere request.TimeEntriesRequest
-                    let sql = AddWhereClauseIfSome timeEntrySelectSql where
+                    
+
+
+                    let sql = $"{AddWhereClauseIfSome timeEntrySelectSql where} ORDER BY {timeEntryOrderByClause} {sqlPagingClause request.PageRequest}"
 
                     let qRes =
                         conn
@@ -760,9 +750,137 @@ module AppDataDonaldSql =
                         |> Db.query timeEntryFromDataReader
 
                     match qRes with
-                    | Ok items -> Ok {TotalRecords = count; Results = items }
-                    | Error e -> ($"Error occured attempting load time entries", e.Error) |> exn |> Error
+                    | Ok items -> Ok { TotalRecords = count; Results = items }
+                    | Error dberror -> dbErrorResult "Error occured attempting load time entries" dberror
             | Error e -> Error e
 
         with
         | ex -> Error ex
+
+    let billingDelailsSqlSelectWithWhereParts =
+        "select c.CUSTOMER_ID, c.CUSTOMER_NAME, wi.WORK_ITEM_ID, wi.Title, wi.DATE_CREATED, wi.IS_COMPLETED, wi.IS_FIXED_PRICE,
+
+            te.DESCRIPTION, te.TIME_START, te.TIME_END
+
+        from CUSTOMER c join
+             WORK_ITEM wi on (wi.CUSTOMER_ID = c.CUSTOMER_ID) join
+             TIME_ENTRY te on (te.WORK_ITEM_ID = wi.WORK_ITEM_ID)
+
+        where wi.IS_BILLABLE and not wi.BEEN_BILLED and not te.BEEN_BILLED and te.TIME_END is not null and
+            (wi.IS_COMPLETED or (not wi.IS_FIXED_PRICE))"
+
+    let billingDetailsSqlOrderByPart = "ORDER BY C.CUSTOMER_NAME, WI.DATE_CREATED, WI.TITLE, TE.DESCRIPTION, te.TIME_START"
+
+    let billingSummarySqlSelectWithWhereParts =
+        "select c.CUSTOMER_ID, c.CUSTOMER_NAME, wi.WORK_ITEM_ID, wi.Title, wi.DATE_CREATED, wi.IS_COMPLETED, wi.IS_FIXED_PRICE,
+
+            te.DESCRIPTION, sum(cast(((te.TIME_END - te.TIME_START)*24*60) AS DOUBLE PRECISION)) as SUM_DURATION
+
+        from CUSTOMER c join
+             WORK_ITEM wi on (wi.CUSTOMER_ID = c.CUSTOMER_ID) join
+             TIME_ENTRY te on (te.WORK_ITEM_ID = wi.WORK_ITEM_ID)
+
+        where wi.IS_BILLABLE and not wi.BEEN_BILLED and not te.BEEN_BILLED and te.TIME_END is not null and
+            (wi.IS_COMPLETED or (not wi.IS_FIXED_PRICE))"
+
+    let billingSummarySqlGroupByAndOrderByParts =
+        "group by c.CUSTOMER_ID, c.CUSTOMER_NAME, wi.WORK_ITEM_ID, wi.Title, wi.DATE_CREATED,  wi.IS_COMPLETED, wi.IS_FIXED_PRICE,
+
+            te.DESCRIPTION
+
+        ORDER BY C.CUSTOMER_NAME, WI.DATE_CREATED, WI.TITLE, TE.DESCRIPTION"
+
+    let private billingSummaryDataFromDataReader (rd: FbDataReader) : BillingData =
+        { CustomerId = "CUSTOMER_ID" |> rd.ReadInt64
+          CustomerName = "CUSTOMER_NAME" |> rd.ReadString
+          WorkItemId = "WORK_ITEM_ID" |> rd.ReadInt64
+          WorkItemTitle = "Title" |> rd.ReadString
+          WorkItemDateCreate = "DATE_CREATED" |> rd.ReadDateTime
+          WorkItemIsCompleted = "IS_COMPLETED" |> rd.ReadBoolean
+          WorkItemIsFixedPriced = "IS_FIXED_PRICE" |> rd.ReadBoolean
+          TimeEntryDescription = "DESCRIPTION" |> rd.ReadString
+          TimeEntryTimeStart = None
+          TimeEntryTimeEnd = None
+          TimeEntryDuration =
+              "SUM_DURATION"
+              |> rd.ReadDoubleOption
+              |> Option.map (fun d -> TimeSpan.FromMinutes(d)) }
+
+    let private billingDetailsDataFromDataReader (rd: FbDataReader) : BillingData =
+        let durationMap (timeStart: DateTime) (timeEnd: DateTime) : TimeSpan =
+            let duration = (timeStart - timeEnd).Duration()
+            duration.TotalMinutes |> ceil |> TimeSpan.FromMinutes
+
+        let duration timeStartOpt timeEndOpt = Option.map2 durationMap timeStartOpt timeEndOpt
+
+        { CustomerId = "CUSTOMER_ID" |> rd.ReadInt64
+          CustomerName = "CUSTOMER_NAME" |> rd.ReadString
+          WorkItemId = "WORK_ITEM_ID" |> rd.ReadInt64
+          WorkItemTitle = "Title" |> rd.ReadString
+          WorkItemDateCreate = "DATE_CREATED" |> rd.ReadDateTime
+          WorkItemIsCompleted = "IS_COMPLETED" |> rd.ReadBoolean
+          WorkItemIsFixedPriced = "IS_FIXED_PRICE" |> rd.ReadBoolean
+          TimeEntryDescription = "DESCRIPTION" |> rd.ReadString
+          TimeEntryTimeStart =
+              "TIME_START"
+              |> rd.ReadDateTimeOption
+              |> Option.map (fun te -> te.ToLocalTime())
+          TimeEntryTimeEnd =
+              "TIME_END"
+              |> rd.ReadDateTimeOption
+              |> Option.map (fun te -> te.ToLocalTime())
+          TimeEntryDuration = duration ("TIME_START" |> rd.ReadDateTimeOption) ("TIME_END" |> rd.ReadDateTimeOption) }
+
+    type recordMappingFunc = FbDataReader -> BillingData
+
+    let private getBillingData
+        (sqlSelectAndWherePart: string)
+        (sqlGroupByAndOrderByPart: string)
+        (mappingFunc: recordMappingFunc)
+        (getDbConnection: GetDbConnection)
+        (where: string option)
+        (dbParamsOptional: RawDbParams option)
+        =
+        try
+            let builder = StringBuilder(sqlSelectAndWherePart).AppendLine()
+            let appendLine (s: string) = builder.AppendLine s |> ignore
+            let append (s: string) = builder.Append s |> ignore
+
+            match where with
+            | Some whereToAdd ->
+                append " and "
+                appendLine whereToAdd
+            | None -> ()
+
+            appendLine sqlGroupByAndOrderByPart
+            let sql = builder.ToString()
+
+            let (dbParams: RawDbParams) =
+                match dbParamsOptional with
+                | Some p -> p
+                | None -> []
+
+            use conn = getDbConnection ()
+
+            let qRes = conn |> Db.newCommand sql |> Db.setParams [] |> Db.query mappingFunc
+
+            qRes
+            |> Result.mapError
+                (fun dberror ->
+                    let whereStr =
+                        match where with
+                        | Some w -> w
+                        | None -> "<none>"
+
+                    let msg = sprintf "Error occured attempting load billing summary with additional where: %s." whereStr
+                    dbErrorExn msg dberror)
+        with
+        | ex -> Error ex
+
+    let private getBillingSummary =
+        getBillingData billingSummarySqlSelectWithWhereParts billingSummarySqlGroupByAndOrderByParts billingSummaryDataFromDataReader
+
+    let private getBillingDetails = getBillingData billingDelailsSqlSelectWithWhereParts billingDetailsSqlOrderByPart billingDetailsDataFromDataReader
+
+    let getAllUnbilledBillingSummaryFromDb (getDbConnection: GetDbConnection) = getBillingSummary getDbConnection None None
+    let getAllUnbilledBillingDetailsFromDb (getDbConnection: GetDbConnection) = getBillingDetails getDbConnection None None

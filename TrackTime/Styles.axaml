@@ -113,7 +113,7 @@
 			<DrawingImage x:Key="ButtonIcon.Next">
 				<GeometryDrawing  Brush="#FF000000" Geometry="M 42.3542,38L 26.5208,53.8333L 37.2083,53.8333L 53.8333,38L 37.2083,22.1667L 26.5208,22.1667L 42.3542,38 Z "   />
 			</DrawingImage>
-			
+
 			<DrawingImage x:Key="ButtonIcon.First.disabled">
 				<GeometryDrawing  Brush="Gray" Geometry="M18.41,16.59L13.82,12L18.41,7.41L17,6L11,12L17,18L18.41,16.59M6,6H8V18H6V6Z"   />
 			</DrawingImage>
@@ -128,6 +128,21 @@
 
 			<DrawingImage x:Key="ButtonIcon.Next.disabled">
 				<GeometryDrawing  Brush="Gray" Geometry="M 42.3542,38L 26.5208,53.8333L 37.2083,53.8333L 53.8333,38L 37.2083,22.1667L 26.5208,22.1667L 42.3542,38 Z "   />
+			</DrawingImage>
+			<DrawingImage x:Key="ButtonIcon.TimeEntryStart">
+				<DrawingGroup   >
+					<GeometryDrawing Brush="#00FFFFFF" Geometry="F1M16,16L0,16 0,0 16,0z" />
+					<GeometryDrawing Brush="#FFF6F6F6" Geometry="F1M2.9997,-0.000199999999999534L2.9997,15.9998 13.6677,7.9998z" />
+					<GeometryDrawing Brush="#FF378A33" Geometry="F1M4,2L4,14 11.999,8z M6,6L8.667,8 6,10z" />
+					<GeometryDrawing Brush="#FFF0EFF1" Geometry="F1M8.667,8L6,10 6,6z" />
+				</DrawingGroup>
+			</DrawingImage>
+			<DrawingImage x:Key="ButtonIcon.TimeEntryStop">
+				<DrawingGroup   >
+					<GeometryDrawing Brush="#00FFFFFF" Geometry="F1M16,16L0,16 0,0 16,0z" />
+					<GeometryDrawing Brush="#FFF6F6F6" Geometry="F1M13,13L3,13 3,3 13,3z" />
+					<GeometryDrawing Brush="#FFA1260D" Geometry="F1M12,12L4,12 4,4 12,4z" />
+				</DrawingGroup>
 			</DrawingImage>
 		</Style.Resources>
 
@@ -311,9 +326,14 @@
 	<Style Selector="CheckBox.listOption">
 		<Setter Property="Margin" Value="5"/>
 	</Style>
-	<!--<Style Selector="ListBox.itemList">
-		<Setter Property="CornerRadius" Value="5"/>
-	</Style>-->
+
+	<Style Selector="ListBoxItem">
+		<Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+		<Setter Property="VerticalContentAlignment" Value="Stretch"/>
+		<Setter Property="HorizontalAlignment" Value="Stretch"/>
+		<Setter Property="VerticalAlignment" Value="Stretch"/>
+	</Style>
+
 	<Style Selector="Button.listOperationButton">
 		<Setter Property="Margin" Value="2,2,0,2"/>
 	</Style>
@@ -444,8 +464,8 @@
 			</Setter.Value>
 		</Setter>
 	</Style>
-	
-	
+
+
 	<Style Selector="Button.first:disabled">
 		<Setter Property="Content">
 			<Setter.Value>
@@ -493,7 +513,7 @@
 				</Template>
 			</Setter.Value>
 		</Setter>
-	</Style>	
+	</Style>
 	<Style Selector="TextBlock.itemsPerPageLabel">
 		<Setter Property="HorizontalAlignment" Value="Right"/>
 		<Setter Property="Margin" Value="0,0,3,0"/>
@@ -512,5 +532,62 @@
 	</Style>
 	<Style Selector="WrapPanel.editField">
 		<Setter Property="Margin" Value="0,0,0,2"/>
+	</Style>
+	<Style Selector="TextBlock.workItemDate">
+		<Setter Property="FontSize" Value="10"/>
+		<Setter Property="Margin" Value="3,0,0,1"/>
+		<Setter Property="VerticalAlignment" Value="Center"/>
+	</Style>
+
+	<Style Selector="WrapPanel.timeEntryListItemPanel">
+		<Setter Property="Orientation" Value="Horizontal"/>
+	</Style>
+
+	<Style Selector="Border.itemBorder">
+		<Setter Property="HorizontalAlignment" Value="Stretch"/>
+		<Setter Property="Background" Value="Transparent"/>
+	</Style>
+	<Style Selector="TextBlock.timeEntryDescription">
+		<Setter Property="FontSize" Value="14"/>
+		<Setter Property="VerticalAlignment" Value="Bottom"/>
+	</Style>
+	<Style Selector="TextBlock.timeEntryTimeStart,TextBlock.timeEntryTimeEnd">
+		<Setter Property="FontSize" Value="10"/>
+		<Setter Property="Margin" Value="5,0,0,1"/>
+		<Setter Property="VerticalAlignment" Value="Bottom"/>
+	</Style>
+	<Style Selector="Image.timeEntryItemOperationButtonIcon">
+		<Setter Property="Width" Value="12"/>
+		<Setter Property="Height" Value="12"/>
+	</Style>
+
+	<Style Selector="Button.restart">
+		<Setter Property="Content">
+			<Setter.Value>
+				<Template>
+					<StackPanel Classes="imageButtonContent">
+						<Image Source="{DynamicResource ButtonIcon.TimeEntryStart}" Classes="buttonIcon"/>
+						<TextBlock Classes="iconButtonText" Text="Restart"/>
+					</StackPanel>
+				</Template>
+			</Setter.Value>
+		</Setter>
+	</Style>
+
+	<Style Selector="Button.endNow">
+		<Setter Property="Content">
+			<Setter.Value>
+				<Template>
+					<StackPanel Classes="imageButtonContent">
+						<Image Source="{DynamicResource ButtonIcon.TimeEntryStop}" Classes="buttonIcon"/>
+						<TextBlock Classes="iconButtonText" Text="End Now"/>
+					</StackPanel>
+				</Template>
+			</Setter.Value>
+		</Setter>
+	</Style>
+
+	<Style Selector="ListBoxItem">
+		<Setter Property="HorizontalContentAlignment" Value="Stretch"/>
 	</Style>
 </Styles>

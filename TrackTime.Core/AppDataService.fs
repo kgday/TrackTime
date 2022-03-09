@@ -32,3 +32,7 @@ module AppDataService =
     let getTimeEntries = getTimeEntriesFromDB connectDB
     //let getTimeEntryCount = getTimeEntryCountFromDB (connectDB())
 
+    let getAllUnbilledBillingSummary() = getAllUnbilledBillingSummaryFromDb connectDB
+    let getAllUnbilledBillingDetails() = getAllUnbilledBillingDetailsFromDb connectDB
+
+

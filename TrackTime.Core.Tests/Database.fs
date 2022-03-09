@@ -6,6 +6,7 @@ open System.Data
 open System.Reflection
 open FirebirdSql.Data.Isql
 open TrackTime.DataInterfaces
+open TrackTime
 
 
 module Database =
@@ -13,25 +14,22 @@ module Database =
     open TrackTime.Core
     open TrackTime.DataModels
     open FirebirdSql.Data.FirebirdClient
-    open Donald.Conection
     open Donald
     open TrackTime.AppDataDonaldSql
 
-    let configfileDevPathFactory () =
-        let dir =
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData))
+    let configfileTestingPathFactory () =
+        let dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData))
 
         Path.Combine(dir, "TrackTimeTest", "settings.json")
 
-    let getConnStr = configfileDevPathFactory >> GetDbConnStrFromConfig
-    let private connStr = getConnStr()
-    let connectDB() = getDbConnectionWithConnStr connStr
+    let getConnStr = configfileTestingPathFactory >> Settings.getSettingsWithConfigPath >>  GetDbConnStrFromSettings
+    let private connStr = getConnStr ()
+    let connectDB () = getDbConnectionWithConnStr connStr
 
     do
         FbConnection.CreateDatabase(connStr, 8192, false, true)
 
-        let scriptDir =
-            Path.GetDirectoryName(Assembly.GetCallingAssembly().Location)
+        let scriptDir = Path.GetDirectoryName(Assembly.GetCallingAssembly().Location)
 
         let scriptFile = Path.Combine(scriptDir, "tracktimedb.sql")
         use streamReader = File.OpenText(scriptFile)
@@ -55,9 +53,7 @@ module Database =
                       CustomerState = CustomerState.Active
                       Notes = None }
 
-                let customer2 =
-                    { Customer.Empty with
-                          Name = CustomerName.Create "Test Customer 2" }
+                let customer2 = { Customer.Empty with Name = CustomerName.Create "Test Customer 2" }
 
                 //add customer and get one customer to test both adding and getting by id
                 let addCustResult = addCustomerToDB connectDB customer
@@ -83,9 +79,7 @@ module Database =
 
 
                 //get list of customers
-                let custListRequest: PagedCustomersRequest =
-                    { PageRequest = { PageNo = 1; ItemsPerPage = 10 }
-                      CustomersRequest = { IncludeInactive = false } }
+                let custListRequest: PagedCustomersRequest = { PageRequest = { PageNo = 1; ItemsPerPage = 10 }; CustomersRequest = { IncludeInactive = false } }
 
                 let customerListJustActive = getCustomersFromDB connectDB custListRequest
 
@@ -98,10 +92,7 @@ module Database =
                     Expect.isSome (Seq.tryFind (fun (cust: Customer) -> cust.CustomerId = custId2) custList) "Second customer added should have been in the returned list"
                 | Error e -> failtestf "Error returned from getCustomersFromDB %s %s\n" (e.GetType().Name) e.Message
 
-                let changedCustomer1 =
-                    { customer with
-                          CustomerId = custId1
-                          Name = CustomerName.Create "Changed Customer Name" }
+                let changedCustomer1 = { customer with CustomerId = custId1; Name = CustomerName.Create "Changed Customer Name" }
 
                 let updateCustomerResult = updateCustomerToDB connectDB changedCustomer1
 
@@ -119,9 +110,7 @@ module Database =
               }
               test "work items" {
                   //add another customer for the work items to be attached to
-                  let customerForWorkItems =
-                      { Customer.Empty with
-                            Name = CustomerName.Create "Customer For WI's" }
+                  let customerForWorkItems = { Customer.Empty with Name = CustomerName.Create "Customer For WI's" }
 
                   let newCustomerIdResult = addCustomerToDB connectDB customerForWorkItems
 
@@ -131,10 +120,7 @@ module Database =
                       | Error e -> failtest "Error occured adding another customer %s %s" (e.GetType().Name) e.Message
 
                   //lets add a work item and then retrieve it - test both adding and geting by id
-                  let WI1 =
-                      { WorkItem.Empty with
-                            CustomerId = newCustId
-                            Title = WorkItemTitle.Create "A Work item" }
+                  let WI1 = { WorkItem.Empty with CustomerId = newCustId; Title = WorkItemTitle.Create "A Work item" }
 
                   let addWIResult = addWorkItemToDB connectDB WI1
 
@@ -167,9 +153,7 @@ module Database =
                   | Error e -> failtestf "Error returned from getWorkItemsFromDB %s %s\n" (e.GetType().Name) e.Message
 
                   //check updating a work item
-                  let changedWorkItem =
-                      { addedWorkItem with
-                            Title = WorkItemTitle.Create "Changed WorkItem Title" }
+                  let changedWorkItem = { addedWorkItem with Title = WorkItemTitle.Create "Changed WorkItem Title" }
 
                   let updateWorkItemResult = updateWorkItemToDB connectDB changedWorkItem
 
@@ -186,9 +170,7 @@ module Database =
               }
               test "timeEntries" {
                   //add a customer first
-                  let customerForWorkItems =
-                      { Customer.Empty with
-                            Name = CustomerName.Create "Customer For Time Entries" }
+                  let customerForWorkItems = { Customer.Empty with Name = CustomerName.Create "Customer For Time Entries" }
 
                   let newCustomerIdResult = addCustomerToDB connectDB customerForWorkItems
 
@@ -198,10 +180,7 @@ module Database =
                       | Error e -> failtest "Error occured adding another customer %s %s" (e.GetType().Name) e.Message
 
                   //add a new work item for the  the time entry tests
-                  let newWorkItem =
-                      { WorkItem.Empty with
-                            Title = WorkItemTitle.Create "New Title"
-                            CustomerId = newCustId }
+                  let newWorkItem = { WorkItem.Empty with Title = WorkItemTitle.Create "New Title"; CustomerId = newCustId }
 
                   let newWorkItemIdResult = addWorkItemToDB connectDB newWorkItem
 
@@ -211,10 +190,7 @@ module Database =
                       | Error e -> failtestf "Error occured adding a new work item. %s %s" (e.GetType().Name) e.Message
 
                   //test adding a time entry and getting by id
-                  let timeEntry =
-                      { TimeEntry.Empty with
-                            WorkItemId = newWorkItemId
-                            Description = TimeEntryDescription.Create "A Work item" }
+                  let timeEntry = { TimeEntry.Empty with WorkItemId = newWorkItemId; Description = TimeEntryDescription.Create "A Work item" }
 
                   let addTimeEntryResult = addTimeEntryToDB connectDB timeEntry
 
@@ -231,9 +207,7 @@ module Database =
                       | Error e -> failtestf "addTimeEntryToDB failed with %s %s" (e.GetType().Name) e.Message
 
                   //list the time entries
-                  let timeEntryRequest: PagedTimeEntriesRequest =
-                      { PageRequest = { PageNo = 1; ItemsPerPage = 10 }
-                        TimeEntriesRequest = { WorkItemId = Some newWorkItemId } }
+                  let timeEntryRequest: PagedTimeEntriesRequest = { PageRequest = { PageNo = 1; ItemsPerPage = 10 }; TimeEntriesRequest = { WorkItemId = Some newWorkItemId } }
 
                   let timeEntriesGetListResult = getTimeEntriesFromDB connectDB timeEntryRequest
 
@@ -242,9 +216,7 @@ module Database =
                   | Error e -> failtestf "getTimeEntriesFromDB returned error %s %s" (e.GetType().Name) e.Message
 
                   //test the update of our added time entry
-                  let changedTimeEntry =
-                      { addedTimeEntry with
-                            Description = TimeEntryDescription.Create "Changed TimeEntry Description" }
+                  let changedTimeEntry = { addedTimeEntry with Description = TimeEntryDescription.Create "Changed TimeEntry Description" }
 
                   let updateTimeEntryResult = updateTimeEntryToDB connectDB changedTimeEntry
 

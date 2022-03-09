@@ -62,15 +62,13 @@ module WorkItem =
         | SetDeleteEnabled of bool
         | DeleteButtonClick
 
-    let init (customerId: CustomerId) (workItemId: WorkItemId option) =
+    let init (customerId: CustomerId) =
         { Mode = Creating
           WorkItem = { WorkItem.Empty with CustomerId = customerId }
           SaveEnabled = true
           DeleteEnabled = true
           ErrorMessage = None },
-        match workItemId with
-        | Some id -> Cmd.ofMsg (LoadForReview id)
-        | None -> Cmd.none
+         Cmd.none
 
     let loadWorkItem id = AppDataService.getOneWorkItem id
     let closeDialog (host: HostWindow) (result: Result<DialogResult, string>) = host.Close(result)
@@ -91,7 +89,7 @@ module WorkItem =
             | Error e -> Error $"Error updating the database. {e.Message}"
         | _ ->
             match AppDataService.addWorkItem state.WorkItem with
-            | Ok _ -> Ok DialogResult.Created
+            | Ok newId -> Ok <| DialogResult.Created newId
             | Error e -> Error $"Error adding to the database. {e.Message}"
 
     let processSaveResult (result: Result<DialogResult, string>) =
@@ -176,7 +174,11 @@ module WorkItem =
             Cmd.none
         | SaveRequested -> state, Cmd.OfFunc.perform processSaveRequest state processSaveResult
         | DeleteConfirmationRequested -> state, Cmd.OfTask.perform (confirmDeletion host) state DeleteConfirmationReceived
-        | DeleteConfirmationReceived confirmed -> state, Cmd.OfFunc.perform deleteWorkItem state.WorkItem processDeleteResult
+        | DeleteConfirmationReceived confirmed -> 
+            if confirmed then
+                state, Cmd.OfFunc.perform deleteWorkItem state.WorkItem processDeleteResult
+            else
+                state, Cmd.none
         | ErrorMessage errorMsg -> { state with ErrorMessage = Some errorMsg }, Cmd.OfTask.perform delay 10000 (fun _ -> ClearError)
         | ClearError -> { state with ErrorMessage = None}, Cmd.batch [ Cmd.ofMsg <| SetSaveEnabled true; Cmd.ofMsg <| SetDeleteEnabled true]
         | CancelRequested -> state, DialogResult.Cancelled |> Ok |> CloseDialog |> Cmd.ofMsg
@@ -316,6 +318,8 @@ module WorkItem =
                                                                                                 Button.onClick (fun _ -> dispatch CancelRequested) ] ]
 
                                                            ] ] ]
+open System.Reactive
+open System.Reactive.Linq
 
 type WorkItemDialog(customerId, workItemId) as this =
     inherit HostWindow()
@@ -328,16 +332,24 @@ type WorkItemDialog(customerId, workItemId) as this =
         base.MinWidth <- 450.0
         base.MinHeight <- 400.0
 
+        let subscribeActivated _ =
+            match workItemId with
+            |None -> Cmd.none
+            |Some wiId -> 
+                let sub dispatch =
+                    this.Activated.Take(1).Subscribe(fun _ -> wiId |> WorkItem.LoadForReview |> dispatch )
+                    |>  ignore
+                Cmd.ofSub sub
 
-        //let init () = WorkItem.init workItemId
 
         //this.VisualRoot.VisualRoot.Renderer.DrawFps <- true
         //this.VisualRoot.VisualRoot.Renderer.DrawDirtyRects <- true
         let update = WorkItem.update this
-        let init = WorkItem.init customerId
+        let init = WorkItem.init 
         let view = WorkItem.view
 
         Elmish.Program.mkProgram init update view
         |> Program.withHost this
         //|> Program.withConsoleTrace
-        |> Program.runWith workItemId
+        |> Program.withSubscription subscribeActivated
+        |> Program.runWith customerId

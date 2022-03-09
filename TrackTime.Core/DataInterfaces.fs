@@ -14,6 +14,10 @@ module DataInterfaces =
           TotalRecords: int64
           Results: 'a list}
 
+        static member Empty() =
+            {  TotalRecords = 0
+               Results = List.Empty }
+
     type PageRequest = { PageNo: int; ItemsPerPage: int }
 
     type WorkItemsRequest =

@@ -2,20 +2,24 @@
 
     <PropertyGroup>
         <TargetFramework>net6.0</TargetFramework>
-        <OutputType>Exe</OutputType>
+        <OutputType>WinExe</OutputType>
     </PropertyGroup>
 
     <ItemGroup>
+		<Content Include="TrackTime.ico">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
         <Compile Include="DialogResult.fs" />
         <Compile Include="Globals.fs" />
         <Compile Include="Dialog.fs" />
         <Compile Include="Icons.fs" />
         <Compile Include="ImageButtonContents.fs" />
+        <Compile Include="SysUtils.fs" />
+        <Compile Include="ReportsPage.fs" />
         <Compile Include="Materialicon.fs" />
         <Compile Include="TimeEntryDialog.fs" />
         <Compile Include="WorkItemDialog.fs" />
         <Compile Include="CustomerDialog.fs" />
-        <Compile Include="UserProfiles.fs" />
         <Compile Include="EntryPage.fs" />
         <Compile Include="About.fs" />
         <Compile Include="Shell.fs" />
@@ -24,14 +28,16 @@
 		<AvaloniaResource Include="**\*.axaml" />
 	</ItemGroup>
 
+    <ItemGroup />
+
     <ItemGroup>
-        <PackageReference Include="Avalonia.Desktop" Version="0.10.10" />
+        <PackageReference Include="Avalonia.Desktop" Version="0.10.12" />
         <PackageReference Include="Destructurama.FSharp" Version="1.2.0" />
         <PackageReference Include="JaggerJo.Avalonia.FuncUI" Version="0.5.0-beta" />
         <PackageReference Include="JaggerJo.Avalonia.FuncUI.DSL" Version="0.5.0-beta" />
         <PackageReference Include="JaggerJo.Avalonia.FuncUI.Elmish" Version="0.5.0-beta" />
         <PackageReference Include="Material.Icons.Avalonia" Version="1.0.2" />
-        <PackageReference Include="MessageBox.Avalonia" Version="1.5.5" />
+        <PackageReference Include="MessageBox.Avalonia" Version="1.7.1" />
         <PackageReference Include="Serilog" Version="2.10.0" />
         <PackageReference Include="Serilog.Sinks.Debug" Version="2.0.0" />
     </ItemGroup>
@@ -41,6 +47,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Update="FSharp.Core" Version="6.0.1" />
+      <PackageReference Update="FSharp.Core" Version="6.0.3" />
     </ItemGroup>
 </Project>

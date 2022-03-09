@@ -65,8 +65,8 @@ module Shell =
                                   //TabItem.content (EntryPage.view state.EntryPageState (EntryPageMsg >> dispatch)) 
                                   TabItem.content (ViewBuilder.Create<EntryPage.Host>([]))]
                             TabItem.create
-                                [ TabItem.header "User Profiles Page"
-                                  TabItem.content (ViewBuilder.Create<UserProfiles.Host>([])) ]
+                                [ TabItem.header "Reports"
+                                  TabItem.content (ViewBuilder.Create<Reports.Host>([])) ]
                             TabItem.create
                                 [ TabItem.header "About"
                                   /// Use your child control's view function to render it, also don't forget to compose
@@ -77,17 +77,21 @@ module Shell =
     /// you can do all sort of useful things here like setting heights and widths
     /// as well as attaching your dev tools that can be super useful when developing with
     /// Avalonia
-    type MainWindow() as this =
+    type MainWindow()  =
         inherit HostWindow()
         do
-            base.Title <- "Track You Time"
+            base.Title <- "Track Your Time"
             base.Width <- 900.0
             base.Height <- 600.0
             base.MinWidth <- 900.0
             base.MinHeight <- 600.0
 
+            let icon =  WindowIcon("TrackTime.ico")
+            base.Icon <- icon
+
             //this.VisualRoot.VisualRoot.Renderer.DrawFps <- true
             //this.VisualRoot.VisualRoot.Renderer.DrawDirtyRects <- true
+        member this.Init () =
             let programUpdate = update this
             Elmish.Program.mkProgram init programUpdate view
             |> Program.withHost this
@@ -97,9 +101,9 @@ module Shell =
         interface IWindowService with
             member this.OpenModelDialog createFunc =
                 task { let showDialogTask =
-                            Dispatcher.UIThread.InvokeAsync<Result<DialogResult, string>> (fun _ ->
+                            Dispatcher.UIThread.InvokeAsync<Result<DialogResult,string>> (fun _ ->
                                     let dialog = createFunc()
-                                    dialog.ShowDialog<Result<DialogResult, string>> this)
+                                    dialog.ShowDialog<Result<DialogResult,string>> this)
 
                        let! returnResult = showDialogTask
                        return match box returnResult with
@@ -118,3 +122,8 @@ module Shell =
 
             member this.ShowConfirmationMsg msgStr =
                 Dialog.showConfirmationMessageDialog this msgStr
+
+            member this.PromptSaveFile (dialogTitle : string option) (filters: FileDialogFilter seq option) (defaultFileName: string option)=
+                 Dialog.saveFileDialog this dialogTitle filters defaultFileName
+            member this.PromptSavePDFFile (dialogTitle : string option) (defaultFileName: string option) =
+                 Dialog.savePDFFileDialog this dialogTitle defaultFileName

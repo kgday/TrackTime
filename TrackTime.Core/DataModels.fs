@@ -224,6 +224,9 @@ module DataModels =
             else
                 Valid s
 
+        member this.Clone () =
+            this.ToString() |> TimeEntryDescription.Create 
+            
         member this.IsValidValue =
             match this with
             | Valid value -> true
@@ -233,9 +236,10 @@ module DataModels =
         | InActive = 0
         | Active = 1
 
-    type CustomerId = int64
-    type WorkItemId = int64
-    type TimeEntryId = int64
+    type RecordId = int64
+    type CustomerId = RecordId
+    type WorkItemId = RecordId
+    type TimeEntryId = RecordId
 
     //[<CLIMutable>]
     type Customer =
@@ -376,3 +380,21 @@ module DataModels =
             }
             |> Seq.filter (fun emsg -> emsg.IsSome)
             |> Seq.map (fun emsg -> emsg.Value)
+
+    type BillingData = 
+        {
+            CustomerId : CustomerId
+            CustomerName: string
+            WorkItemId : WorkItemId
+            WorkItemTitle : string
+            WorkItemDateCreate : DateTime
+            WorkItemIsCompleted : bool
+            WorkItemIsFixedPriced : bool
+            TimeEntryDescription : string
+            TimeEntryTimeStart : DateTime option
+            TimeEntryTimeEnd : DateTime option
+            TimeEntryDuration : TimeSpan option
+        }
+
+
+          

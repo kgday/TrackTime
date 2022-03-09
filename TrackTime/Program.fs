@@ -22,6 +22,7 @@ type App() =
             let mainWindow = Shell.MainWindow()
             Globals.SetWindowService(mainWindow)
             desktopLifetime.MainWindow <- mainWindow
+            mainWindow.Init()       
         | _ -> ()
 
 module Program =
