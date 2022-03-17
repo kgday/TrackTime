@@ -13,6 +13,7 @@ open Avalonia.FuncUI.Builder
 open Avalonia.VisualTree
 open Avalonia.Media
 open Avalonia.Styling
+open ReportViewer
 
 module EntryPage =
     open Avalonia.Controls
@@ -1059,13 +1060,12 @@ module EntryPage =
 
     type Host() as this =
         inherit Hosts.HostControl()
-        //let ownerWindow = Application.Current.ApplicationLifetime.
+        
         do
-            /// You can use `.mkProgram` to pass Commands around
-            /// if you decide to use it, you have to also return a Command in the initFn
-            /// (init, Cmd.none)
-            /// you can learn more at https://elmish.github.io/elmish/basics.html
-
+            ///// You can use `.mkProgram` to pass Commands around
+            ///// if you decide to use it, you have to also return a Command in the initFn
+            ///// (init, Cmd.none)
+            ///// you can learn more at https://elmish.github.io/elmish/basics.html
             Elmish.Program.mkProgram init update view
             |> Program.withHost this
             //|> Program.withConsoleTrace

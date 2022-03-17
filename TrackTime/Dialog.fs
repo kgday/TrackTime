@@ -9,17 +9,23 @@ open System
 open System.IO
 
 module Dialog =
-    let showErrorMessageDialog owningWindow errorMessageString : Task<unit> =
+    let showErrorMessageDialog owningWindow msg : Task<unit> = 
         Dispatcher.UIThread.InvokeAsync<unit>
-            (fun _ ->
-                Log.Error errorMessageString
+                    (fun _ ->
+                        task {
+                            let mb =
+                                MessageBoxManager.GetMessageBoxStandardWindow(
+                                    "Error",
+                                    msg,
+                                    Enums.ButtonEnum.Ok,
+                                    Enums.Icon.Error,
+                                    WindowStartupLocation.CenterOwner
+                                )
 
-                let mb =
-                    MessageBoxManager.GetMessageBoxStandardWindow("Error", errorMessageString, Enums.ButtonEnum.Ok, Enums.Icon.Error, WindowStartupLocation.CenterOwner)
-
-                mb.ShowDialog owningWindow |> ignore)
-
-
+                            let! result = mb.ShowDialog owningWindow
+                            return (result |> ignore)
+                        }) 
+                        
     let showConfirmationMessageDialog owningWindow confirmationMessageString : Task<bool> =
         Dispatcher.UIThread.InvokeAsync<bool>
             (fun _ ->

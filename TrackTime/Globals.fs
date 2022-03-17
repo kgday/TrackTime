@@ -12,6 +12,7 @@ type IWindowService =
     abstract ShowConfirmationMsg: msgStr: string -> Task<bool>
     abstract PromptSaveFile : string option -> FileDialogFilter seq option -> string option -> Task<string option>
     abstract PromptSavePDFFile : string option -> string option -> Task<string option>
+    abstract PreviewReportDialog : createWindowFunc:(unit -> Window) -> Task<Result<unit,exn>>
 
 module Globals =
     let mutable private windowService: IWindowService option = None

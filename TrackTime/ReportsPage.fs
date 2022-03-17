@@ -2,6 +2,7 @@
 
 open System
 
+
 /// This is the Reports sample
 /// you can use the Host to create a view control that has an independent program
 /// if you want to be aware of the control's state  you should to refer to  Shell.fs and BlankPage.fs
@@ -14,30 +15,39 @@ module Reports =
     open Avalonia.FuncUI.Elmish
     open Elmish
     open TrackTime.Core
+    open FastReport
 
     /// sample function to load the initial data
 
-    type State = { IsBusy: bool }
+    type State =
+        { IsBusy: bool
+          SummaryParams: BillingSummaryReport.ReportParams
+          DetailParams: BillingDetailsReport.ReportParams }
+
+
 
     type Msg =
         | LaunchBillingSummary
-        | GenerateBillingSummary of outputFileName: string option
         | LaunchBillingDetails
-        | GenerateBillingDetails of outputFileName: string option
-        | ReportGenDone of Result<string, exn>
+        | ReportPreviewClosed of Result<unit,exn>
         | ShowErrorMessage of string
         | Nothing
 
     /// you can dispatch commands in your init if you chose to use `Program.mkProgram`
     /// instead of `Program.mkSimple`
-    let init = { IsBusy = false }, Cmd.none
+    let init =
+        { IsBusy = false
+          SummaryParams = BillingSummaryReport.ReportParams.All
+          DetailParams = BillingDetailsReport.ReportParams.All },
+        Cmd.none
 
     let saveSummaryReportDirSettings reportDir =
         let settings = Settings.getSettings ()
 
         let newsettings =
             { settings with
-                  ReportOutputDirectories = { settings.ReportOutputDirectories with FullBillingSummary = (Some reportDir) } }
+                ReportOutputDirectories =
+                    { settings.ReportOutputDirectories with FullBillingSummary = (Some reportDir) } }
 
         Settings.saveSettings newsettings
 
@@ -46,78 +56,53 @@ module Reports =
 
         let newsettings =
             { settings with
-                  ReportOutputDirectories = { settings.ReportOutputDirectories with FullBillingDetails = (Some reportDir) } }
+                ReportOutputDirectories =
+                    { settings.ReportOutputDirectories with FullBillingDetails = (Some reportDir) } }
 
         Settings.saveSettings newsettings
+
+    let previewReport (genReport:GenReportFunc) =
+        let windowService = Globals.GetWindowService()
+        windowService.PreviewReportDialog(fun _ -> ReportViewerDialog(genReport))
 
     let update (msg: Msg) (state: State) : State * Cmd<_> =
         match msg with
         | LaunchBillingSummary ->
-            let windowService = Globals.GetWindowService()
-            let settings = Settings.getSettings ()
-            let outputDir = settings.ReportOutputDirectories.FullBillingSummary
-            let defaultFileNameOnly = sprintf "Billing_Summary_Report_%s.pdf" (DateTime.Now.ToString("yyyyMMdd_HHmmss"))
+            let genReport () = BillingSummaryReport.generateBillingSummary state.SummaryParams
+            { state with IsBusy = true },
+            Cmd.OfTask.perform previewReport genReport ReportPreviewClosed
 
-            let defaultFileName =
-                match outputDir with
-                | Some dir -> System.IO.Path.Combine(dir, defaultFileNameOnly)
-                | None -> defaultFileNameOnly
-
-            { state with IsBusy = true }, Cmd.OfTask.perform (windowService.PromptSavePDFFile(Some "Save PDf File")) (Some defaultFileName) GenerateBillingSummary
-        | GenerateBillingSummary fileNameOptional ->
-            state,
-            match fileNameOptional with
-            | Some fileName ->
-                Cmd.batch [ Cmd.OfAsync.perform BillingSummaryReportGen.generateBillingSummary fileName ReportGenDone
-                            Cmd.OfFunc.perform saveSummaryReportDirSettings (System.IO.Path.GetDirectoryName(fileName)) (fun _ -> Nothing) ]
-            | None -> Cmd.none
         | LaunchBillingDetails ->
-            let windowService = Globals.GetWindowService()
-            let settings = Settings.getSettings ()
-            let outputDir = settings.ReportOutputDirectories.FullBillingDetails
-            let defaultFileNameOnly = sprintf "Billing_Detail_Report_%s.pdf" (DateTime.Now.ToString("yyyyMMdd_HHmmss"))
+            let genReport () = BillingDetailsReport.generateBillingDetails state.DetailParams
+            { state with IsBusy = true },
+            Cmd.OfTask.perform previewReport genReport ReportPreviewClosed
 
-            let defaultFileName =
-                match outputDir with
-                | Some dir -> System.IO.Path.Combine(dir, defaultFileNameOnly)
-                | None -> defaultFileNameOnly
-
-            { state with IsBusy = true }, Cmd.OfTask.perform (windowService.PromptSavePDFFile(Some "Save PDf File")) (Some defaultFileName) GenerateBillingDetails
-        | GenerateBillingDetails fileNameOptional ->
-            state,
-            match fileNameOptional with
-            | Some fileName ->
-                Cmd.batch [ Cmd.OfAsync.perform BillingDetailsReportGen.generateBillingDetails fileName ReportGenDone
-                            Cmd.OfFunc.perform saveDetailsReportDirSettings (System.IO.Path.GetDirectoryName(fileName)) (fun _ -> Nothing) ]
-            | None -> Cmd.none
-
-        | ReportGenDone genResult ->
-            { state with IsBusy = false },
-            match genResult with
-            | Ok fileName -> Cmd.OfFunc.perform SysUtils.osOpen fileName (fun _ -> Nothing)
-            | Error ex ->
-                [ "Error generating billing summary report file."; ex.Message ]
-                |> String.concat " "
-                |> ShowErrorMessage
-                |> Cmd.ofMsg
+        | ReportPreviewClosed result ->
+            {state with IsBusy = false},
+            match result with
+            |Ok _ -> Cmd.none
+            |Error e -> "Error previewing the report: "+e.Message |> ShowErrorMessage |> Cmd.ofMsg
         | ShowErrorMessage errorMessageString ->
             let windowService = Globals.GetWindowService()
             state, Cmd.OfTask.perform windowService.ShowErrorMsg errorMessageString (fun _ -> Nothing)
         | Nothing -> state, Cmd.none
 
-    let private billingSummRptView (dispatch: Dispatch<Msg>) =
+    let private billingSummRptView state (dispatch: Dispatch<Msg>) =
         Button.create [ Button.classes [ "billingSummRpt" ]
                         Button.content "Full Billing Summary Report"
+                        Button.isEnabled (not state.IsBusy)
                         Button.onClick (fun e -> dispatch LaunchBillingSummary) ]
 
-    let private billingDetailsRptView (dispatch: Dispatch<Msg>) =
+    let private billingDetailsRptView state (dispatch: Dispatch<Msg>) =
         Button.create [ Button.classes [ "billingDetailsRpt" ]
                         Button.content "Full Billing Details Report"
+                        Button.isEnabled (not state.IsBusy)
                         Button.onClick (fun e -> dispatch LaunchBillingDetails) ]
 
     let view (state: State) (dispatch: Dispatch<Msg>) =
         WrapPanel.create [ WrapPanel.classes [ "Reportsgrid" ]
-                           WrapPanel.children [ billingSummRptView dispatch; billingDetailsRptView dispatch ] ]
+                           WrapPanel.children [ billingSummRptView state dispatch
+                                                billingDetailsRptView state dispatch ] ]
 
 
 

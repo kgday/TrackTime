@@ -9,6 +9,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="ReportUtils.fs" />
+    <Content Include="BillingDetails.frx">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="BillingSummary.frx">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Compile Include="Report.fs" />
     <Compile Include="DataModels.fs" />
     <Compile Include="DataInterfaces.fs" />
@@ -25,9 +32,11 @@
 
   <ItemGroup>
     <PackageReference Include="Donald" Version="7.1.0" />
+    <PackageReference Include="FastReport.OpenSource" Version="2022.2.0" />
+    <PackageReference Include="FastReport.OpenSource.Export.PdfSimple" Version="2022.2.0" />
+    <PackageReference Include="FastReport.ReportBuilder" Version="2021.1.0" />
     <PackageReference Include="FirebirdSql.Data.FirebirdClient" Version="8.5.4" />
     <PackageReference Include="FSharp.Json" Version="0.4.1" />
-    <PackageReference Include="QuestPDF" Version="2022.2.3" />
     <PackageReference Include="Serilog" Version="2.10.0" />
   </ItemGroup>
   

@@ -4,44 +4,58 @@ open System
 open DataModels
 
 
-module BillingSummaryReportGen =
-    type private BillingSummary_TimeEntry = { Description: string; Duration: TimeSpan option }
+module BillingSummaryReport =
+    open ReportExtensions
 
-    type private BillingSummary_WorkItem =
+    type BillingSummary_TimeEntry =
+        { Description: string
+          DurationHrs: double }
+
+    type BillingSummary_WorkItem =
         { WorkItemId: WorkItemId
           Title: string
           DateCreated: DateTime
           IsCompleted: bool
           IsFixedPriced: bool
           TimeEntries: BillingSummary_TimeEntry list
-          TotalDuration: TimeSpan option }
+          TotalDurationHrs: double }
 
-    type private BillingSummary_Customer = { CustomerId: CustomerId; Name: string; WorkItems: BillingSummary_WorkItem list; TotalDuration: TimeSpan option }
+    type BillingSummary_Customer =
+        { CustomerId: CustomerId
+          Name: string
+          WorkItems: BillingSummary_WorkItem list
+          TotalDurationHrs: double }
 
-    type private BillingSummary = { Title: string; Customers: BillingSummary_Customer list }
+    type BillingSummary =
+        { RptSubTitle: string
+          Customers: BillingSummary_Customer list }
 
-    let private convertResultsToReportStructure (results: BillingData list) =
+    let convertResultsToReportStructure rptSubTitle (results: BillingData list) =
         let timeEntryFromData (data: BillingData) : BillingSummary_TimeEntry =
+            let totalHours =
+                data.TimeEntryDuration
+                |> Option.map (fun d -> d.TotalHours)
+                |> Option.defaultValue 0.0
+
             { BillingSummary_TimeEntry.Description = data.TimeEntryDescription
-              BillingSummary_TimeEntry.Duration = data.TimeEntryDuration }
+              BillingSummary_TimeEntry.DurationHrs = totalHours }
 
         let assignWorkItemTimeEntryListAndTotal ((workItem: BillingSummary_WorkItem), (subList: BillingData list)) =
             let timeEntryList = subList |> List.map timeEntryFromData
 
-            let totalDuration =
-                let durationsList =
+            let totalDurationHrs =
+                let DurationHrsList =
                     timeEntryList
-                    |> List.filter (fun te -> te.Duration.IsSome)
-                    |> List.map (fun te -> te.Duration.Value.TotalMinutes)
+                    |> List.map (fun te -> te.DurationHrs)
 
-                if List.isEmpty durationsList then
-                    None
+                if List.isEmpty DurationHrsList then
+                    0.0
                 else
-                    durationsList |> List.sum |> TimeSpan.FromMinutes |> Some
+                    DurationHrsList |> List.sum
 
             { workItem with
-                  BillingSummary_WorkItem.TimeEntries = timeEntryList
-                  BillingSummary_WorkItem.TotalDuration = totalDuration }
+                BillingSummary_WorkItem.TimeEntries = timeEntryList
+                BillingSummary_WorkItem.TotalDurationHrs = totalDurationHrs }
 
         let workItemFromData (data: BillingData) : BillingSummary_WorkItem =
             { BillingSummary_WorkItem.WorkItemId = data.WorkItemId
@@ -50,59 +64,67 @@ module BillingSummaryReportGen =
               BillingSummary_WorkItem.IsCompleted = data.WorkItemIsCompleted
               BillingSummary_WorkItem.IsFixedPriced = data.WorkItemIsFixedPriced
               BillingSummary_WorkItem.TimeEntries = []
-              BillingSummary_WorkItem.TotalDuration = None }
+              BillingSummary_WorkItem.TotalDurationHrs = 0 }
 
-        let assignCustomerWorkItemListAndTotal ((customer: BillingSummary_Customer), (subList: BillingData list)) : BillingSummary_Customer =
+        let assignCustomerWorkItemListAndTotal
+            (
+                (customer: BillingSummary_Customer),
+                (subList: BillingData list)
+            ) : BillingSummary_Customer =
             let workItemList =
                 subList
                 |> List.groupBy workItemFromData
                 |> List.map assignWorkItemTimeEntryListAndTotal
 
-            let totalDuration =
-                let durationsList =
+            let totalDurationHrs =
+                let DurationHrsList =
                     workItemList
-                    |> List.filter (fun wi -> wi.TotalDuration.IsSome)
-                    |> List.map (fun wi -> wi.TotalDuration.Value.TotalMinutes)
+                    |> List.map (fun wi -> wi.TotalDurationHrs)
 
-                if List.isEmpty durationsList then
-                    None
+                if List.isEmpty DurationHrsList then
+                    0.0
                 else
-                    durationsList |> List.sum |> TimeSpan.FromMinutes |> Some
+                    DurationHrsList |> List.sum
 
             { customer with
-                  BillingSummary_Customer.WorkItems = workItemList
-                  BillingSummary_Customer.TotalDuration = totalDuration }
+                BillingSummary_Customer.WorkItems = workItemList
+                BillingSummary_Customer.TotalDurationHrs = totalDurationHrs }
 
         let customerFromData (data: BillingData) : BillingSummary_Customer =
             { BillingSummary_Customer.CustomerId = data.CustomerId
               BillingSummary_Customer.Name = data.CustomerName
               BillingSummary_Customer.WorkItems = []
-              BillingSummary_Customer.TotalDuration = None }
+              BillingSummary_Customer.TotalDurationHrs = 0 }
 
         let customers =
             results
             |> List.groupBy customerFromData
             |> List.map assignCustomerWorkItemListAndTotal
 
-        { BillingSummary.Title = "Billing Summary Report"; BillingSummary.Customers = customers }
+        { BillingSummary.RptSubTitle = rptSubTitle
+          BillingSummary.Customers = customers }
 
-    let private readReportDataAllUnbilled () =
+    let readReportDataAllUnbilled () =
         try
             let dataResult = AppDataService.getAllUnbilledBillingSummary ()
 
             match dataResult with
-            | Ok dataList -> dataList |> convertResultsToReportStructure |> Ok
+            | Ok dataList ->
+                dataList
+                |> convertResultsToReportStructure "All Unbilled"
+                |> Ok
             | Error ex -> Error ex
         with
         | ex -> Error ex
 
+    (*
     open QuestPDF.Drawing
     open QuestPDF.Fluent
     open QuestPDF.Helpers
     open QuestPDF.Infrastructure
     open ReportExtensions
 
-    let private composeReportContentTable (data: BillingSummary) (container: IContainer) =
+    let  composeReportContentTable (data: BillingSummary) (container: IContainer) =
         container.Table
             (fun table ->
                 table.ColumnsDefinition
@@ -166,16 +188,16 @@ module BillingSummaryReportGen =
                                     (fun te ->
                                         table.Cell().Row(row).Column(6u).Text(te.Description)
 
-                                        let durationStr =
-                                            te.Duration
+                                        let DurationHrstr =
+                                            te.DurationHrs
                                             |> Option.map (fun d -> d.Formated())
                                             |> Option.defaultValue ""
 
-                                        table.Cell().Row(row).Column(7u).AlignRight().Text(durationStr)
+                                        table.Cell().Row(row).Column(7u).AlignRight().Text(DurationHrstr)
 
                                         row <- row + 1u)
 
-                                if (wi.TimeEntries.Length > 1) && wi.TotalDuration.IsSome then
+                                if (wi.TimeEntries.Length > 1) && wi.TotalDurationHrs.IsSome then
                                     table
                                         .Cell()
                                         .Row(row)
@@ -196,7 +218,7 @@ module BillingSummaryReportGen =
                                         .AlignRight()
                                         .BorderTop(0.05f)
                                         .BorderColor(Colors.Grey.Medium)
-                                        .Text(wi.TotalDuration.Value.Formated(), Report.totalValueStyle)
+                                        .Text(wi.TotalDurationHrs.Value.Formated(), Report.totalValueStyle)
 
                                     table
                                         .Cell()
@@ -210,7 +232,7 @@ module BillingSummaryReportGen =
 
                                     row <- row + 1u)
 
-                        if cust.TotalDuration.IsSome then
+                        if cust.TotalDurationHrs.IsSome then
                             table
                                 .Cell()
                                 .Row(row)
@@ -231,7 +253,7 @@ module BillingSummaryReportGen =
                                 .AlignRight()
                                 .BorderTop(0.05f)
                                 .BorderColor(Colors.Grey.Medium)
-                                .Text(cust.TotalDuration.Value.Formated(), Report.totalValueStyle)
+                                .Text(cust.TotalDurationHrs.Value.Formated(), Report.totalValueStyle)
 
                             table
                                 .Cell()
@@ -267,3 +289,39 @@ module BillingSummaryReportGen =
                         billingSummaryDocument.GeneratePdf(filename)
                         filename)
         }
+        *)
+
+    type ReportParams = | All
+
+    open FastReport
+    open FastReport.ReportBuilder
+    open FastReport.Export.PdfSimple
+    ///Generates the result and saves the report
+    let generateBillingSummary (parameters: ReportParams) =
+        async {
+            let bsDataResult = readReportDataAllUnbilled ()
+
+            return
+                "Billing Summary Report",
+                bsDataResult
+                |> Result.map (fun billingSummary ->
+                    use report = new Report()
+                    report.Load("BillingSummary.frx")
+                    report.RegisterData([ billingSummary ], "BillingSummaryData")
+                    report.Prepare() |> ignore
+                    ReportUtils.cleanTempReportsDir()
+                    let outputFileName = ReportUtils.reportTempOutputFileName "BillingSummary"
+                    report.SavePrepared(outputFileName)
+                    outputFileName)
+        }
+
+
+
+
+
+
+//    filename
+
+//readReportDataAllUnbilled ()
+//|> Result.map
+//    (fun billingSummary -> billingSummary |> buildReport)

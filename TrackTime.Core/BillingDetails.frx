@@ -1,0 +1,92 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Report ScriptLanguage="CSharp" DoublePass="true" ReportInfo.Created="03/12/2022 15:44:41" ReportInfo.Modified="03/14/2022 17:59:40" ReportInfo.CreatorVersion="2022.1.0.0">
+  <Dictionary>
+    <BusinessObjectDataSource Name="BillingDetailsData" ReferenceName="BillingDetailsData" DataType="null" Enabled="true">
+      <Column Name="RptSubTitle" DataType="System.String"/>
+      <BusinessObjectDataSource Name="Customers" DataType="null" Enabled="true">
+        <Column Name="CustomerId" DataType="System.Int64"/>
+        <Column Name="Name" DataType="System.String"/>
+        <BusinessObjectDataSource Name="WorkItems" DataType="null" Enabled="true">
+          <Column Name="WorkItemId" DataType="System.Int64"/>
+          <Column Name="Title" DataType="System.String"/>
+          <Column Name="DateCreated" DataType="System.DateTime"/>
+          <Column Name="IsCompleted" DataType="System.Boolean" BindableControl="CheckBox"/>
+          <Column Name="IsFixedPriced" DataType="System.Boolean" BindableControl="CheckBox"/>
+          <BusinessObjectDataSource Name="TimeEntries" DataType="null" Enabled="true">
+            <Column Name="Description" DataType="System.String"/>
+            <BusinessObjectDataSource Name="Details" DataType="null" Enabled="true">
+              <Column Name="TimeStart" DataType="System.DateTime"/>
+              <Column Name="TimeEnd" DataType="System.DateTime"/>
+              <Column Name="DurationHrs" DataType="System.Double"/>
+            </BusinessObjectDataSource>
+            <Column Name="TotalDurationHrs" DataType="System.Double"/>
+          </BusinessObjectDataSource>
+          <Column Name="TotalDurationHrs" DataType="System.Double"/>
+        </BusinessObjectDataSource>
+        <Column Name="TotalDurationHrs" DataType="System.Double"/>
+      </BusinessObjectDataSource>
+    </BusinessObjectDataSource>
+  </Dictionary>
+  <ReportPage Name="Page1" Landscape="true" PaperWidth="297" PaperHeight="210" RawPaperSize="9" Watermark.Font="Arial, 60pt">
+    <ReportTitleBand Name="ReportTitle1" Width="1047.06" Height="45.36">
+      <TextObject Name="Text1" Width="1048.95" Height="23.79" Anchor="Top, Left, Right" Text="Billing Details Report" HorzAlign="Center" Font="Arial, 14.25pt, style=Bold"/>
+      <TextObject Name="Text2" Top="26.46" Width="1047.06" Height="18.9" Text="[BillingDetailsData.RptSubTitle]" HorzAlign="Center" Font="Arial, 11.25pt"/>
+    </ReportTitleBand>
+    <PageHeaderBand Name="PageHeader1" Top="49.36" Width="1047.06" Height="24.57">
+      <TextObject Name="Text27" Width="412.02" Height="18.9" Text="Billing Details Report" VertAlign="Bottom" Font="Arial, 9pt"/>
+      <TextObject Name="Text28" Left="695.52" Width="351.54" Height="18.9" Text="[BillingDetailsData.RptSubTitle]" HorzAlign="Right" VertAlign="Bottom" Font="Arial, 9pt"/>
+      <ChildBand Name="Child1" Top="77.93" Width="1047.06" Height="45.36" PrintOn="LastPage, OddPages, EvenPages, RepeatedBand, SinglePage">
+        <TextObject Name="Text6" Left="34.02" Top="20.54" Width="226.8" Height="18.9" Text="WorkItem" VertAlign="Bottom" Font="Arial, 10pt, style=Bold"/>
+        <TextObject Name="Text9" Left="260.82" Top="20.54" Width="90.72" Height="18.9" Text="Date Created" VertAlign="Bottom" Font="Arial, 10pt, style=Bold"/>
+        <TextObject Name="Text4" Top="1.64" Width="94.5" Height="18.9" Text="Customer" VertAlign="Bottom" Font="Arial, 10pt, style=Bold"/>
+        <TextObject Name="Text10" Left="355.17" Top="1.64" Width="75.6" Height="18.9" Text="Completed" VertAlign="Bottom" Font="Arial, 10pt, style=Bold"/>
+        <TextObject Name="Text12" Left="433.06" Top="1.64" Width="45.36" Height="37.8" Text="Fixed Price" VertAlign="Bottom" Font="Arial, 10pt, style=Bold"/>
+        <TextObject Name="Text14" Left="480.98" Top="1.64" Width="241.92" Height="18.9" Text="Time Entry" VertAlign="Bottom" Font="Arial, 10pt, style=Bold"/>
+        <TextObject Name="Text16" Left="726.68" Top="1.64" Width="120.96" Height="18.9" Text="TimeStart" VertAlign="Bottom" Font="Arial, 10pt, style=Bold"/>
+        <TextObject Name="Text18" Left="850.5" Top="1.64" Width="120.96" Height="18.9" Text="TimeEnd" VertAlign="Bottom" Font="Arial, 10pt, style=Bold"/>
+        <TextObject Name="Text20" Left="971.46" Top="1.64" Width="71.82" Height="18.9" Text="Hours" VertAlign="Bottom" Font="Arial, 10pt, style=Bold"/>
+        <LineObject Name="Line2" Top="39" Width="1047.06"/>
+      </ChildBand>
+    </PageHeaderBand>
+    <GroupHeaderBand Name="GroupHeader1" Top="127.29" Width="1047.06" Height="18.9" Condition="[BillingDetailsData.Customers.Name]">
+      <TextObject Name="Text7" Width="241.92" Height="18.9" Text="[[BillingDetailsData.Customers.Name]]" Font="Arial, 10pt"/>
+      <GroupHeaderBand Name="GroupHeader2" Top="150.19" Width="1047.06" Height="18.9" Condition="[BillingDetailsData.Customers.WorkItems.Title]">
+        <TextObject Name="Text3" Left="34.02" Width="223.02" Height="18.9" Text="[[BillingDetailsData.Customers.WorkItems.Title]]" Font="Arial, 10pt"/>
+        <TextObject Name="Text8" Left="260.82" Width="90.72" Height="18.9" Text="[BillingDetailsData.Customers.WorkItems.DateCreated]" Format="Date" Format.Format="d" Font="Arial, 10pt"/>
+        <TextObject Name="Text11" Left="355.17" Width="75.6" Height="18.9" Text="[IIf([BillingDetailsData.Customers.WorkItems.IsCompleted],&quot;Yes&quot;,&quot;No&quot;)]" HorzAlign="Center" Font="Arial, 10pt"/>
+        <TextObject Name="Text13" Left="433.06" Width="45.36" Height="18.9" Text="[IIf([BillingDetailsData.Customers.WorkItems.IsFixedPriced],&quot;Yes&quot;,&quot;No&quot;)]" HorzAlign="Center" Font="Arial, 10pt"/>
+        <LineObject Name="Line7" Top="3.78"/>
+        <GroupHeaderBand Name="GroupHeader3" Top="173.09" Width="1047.06" Height="37.8" Condition="[BillingDetailsData.Customers.WorkItems.TimeEntries.Description]">
+          <TextObject Name="Text5" Left="480.98" Width="241.92" Height="18.9" Text="[[BillingDetailsData.Customers.WorkItems.TimeEntries.Description]]" Font="Arial, 10pt"/>
+          <DataBand Name="Data1" Top="214.89" Width="1047.06" Height="18.9" DataSource="Customers">
+            <TextObject Name="Text15" Left="726.68" Width="120.96" Height="18.9" Text="[BillingDetailsData.Customers.WorkItems.TimeEntries.Details.TimeStart]" Format="Date" Format.Format="d" Font="Arial, 10pt"/>
+            <TextObject Name="Text17" Left="850.5" Width="120.96" Height="18.9" Text="[BillingDetailsData.Customers.WorkItems.TimeEntries.Details.TimeEnd]" Format="Date" Format.Format="d" Font="Arial, 10pt"/>
+            <TextObject Name="Text19" Left="971.46" Width="71.82" Height="18.9" Text="[BillingDetailsData.Customers.WorkItems.TimeEntries.Details.DurationHrs]" Font="Arial, 10pt"/>
+          </DataBand>
+          <GroupFooterBand Name="GroupFooter3" Top="237.79" Width="1047.06" Height="22.68">
+            <LineObject Name="Line1" Left="971.46" Width="71.82"/>
+            <TextObject Name="Text21" Left="971.46" Width="71.82" Height="18.9" Text="[BillingDetailsData.Customers.WorkItems.TimeEntries.TotalDurationHrs]" Font="Arial, 10pt, style=Bold"/>
+            <TextObject Name="Text22" Left="249.48" Width="721.98" Height="18.9" Text="Total for Time Entry '[BillingDetailsData.Customers.WorkItems.TimeEntries.Description]':" HorzAlign="Right" Font="Arial, 10pt, style=Bold"/>
+            <LineObject Name="Line3" Left="480.06" Top="18.9" Width="559.44"/>
+          </GroupFooterBand>
+        </GroupHeaderBand>
+        <GroupFooterBand Name="GroupFooter2" Top="264.47" Width="1047.06" Height="37.8">
+          <TextObject Name="Text23" Left="971.46" Width="71.82" Height="18.9" Text="[BillingDetailsData.Customers.WorkItems.TotalDurationHrs]" Font="Arial, 10pt, style=Bold"/>
+          <TextObject Name="Text24" Left="253.26" Width="718.2" Height="18.9" Text="Total for Work Item [BillingDetailsData.Customers.WorkItems.Title]:" HorzAlign="Right" Font="Arial, 10pt, style=Bold"/>
+          <LineObject Name="Line4" Left="34.02" Top="18.9" Width="1005.48"/>
+        </GroupFooterBand>
+      </GroupHeaderBand>
+      <GroupFooterBand Name="GroupFooter1" Top="306.27" Width="1047.06" Height="37.8">
+        <TextObject Name="Text25" Left="971.46" Width="71.82" Height="18.9" Text="[BillingDetailsData.Customers.TotalDurationHrs]" Font="Arial, 10pt, style=Bold"/>
+        <TextObject Name="Text26" Left="147.42" Width="824.04" Height="18.9" Text="Total for Customer '[BillingDetailsData.Customers.Name]':" HorzAlign="Right" Font="Arial, 10pt, style=Bold"/>
+        <LineObject Name="Line5" Top="18.9" Width="1039.5"/>
+      </GroupFooterBand>
+    </GroupHeaderBand>
+    <PageFooterBand Name="PageFooter1" Top="348.07" Width="1047.06" Height="26.46">
+      <TextObject Name="Text30" Width="1043.28" Height="18.9" Text="[TotalPages]" HorzAlign="Center" VertAlign="Bottom" Font="Arial, 9pt"/>
+      <TextObject Name="Text29" Width="94.5" Height="18.9" Text="Printed [Date]" HorzAlign="Right" VertAlign="Bottom" Font="Arial, 9pt"/>
+      <TextObject Name="Text31" Left="884.52" Width="158.76" Height="18.9" Text="Track Your Time" HorzAlign="Right" VertAlign="Bottom" Font="Arial, 9pt"/>
+      <LineObject Name="Line6" Width="1043.28"/>
+    </PageFooterBand>
+  </ReportPage>
+</Report>

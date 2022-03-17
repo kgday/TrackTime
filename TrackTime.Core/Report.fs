@@ -1,10 +1,10 @@
 ﻿namespace TrackTime
 
 open System
-open QuestPDF.Drawing
-open QuestPDF.Fluent
-open QuestPDF.Helpers
-open QuestPDF.Infrastructure
+//open QuestPDF.Drawing
+//open QuestPDF.Fluent
+//open QuestPDF.Helpers
+//open QuestPDF.Infrastructure
 
 module ReportExtensions =
     type TimeSpan with
@@ -13,6 +13,17 @@ module ReportExtensions =
             let hoursMinutes = [ hours.ToString("d2"); this.Minutes.ToString("d2") ]
             hoursMinutes |> String.concat ":"
 
+        member this.ToHoursMinutes() =
+            let hours = floor this.TotalHours |> int  
+            let mins = this.Minutes
+            hours, mins
+module TimeSpan =
+    open ReportExtensions
+    let toHoursMinutes (ts:TimeSpan) = ts.ToHoursMinutes()
+
+
+
+    (*
 module internal Report =
     type PageOrientation =
         | Portrait
@@ -103,3 +114,4 @@ module internal Report =
                 meta.Author <- "Track Your Time"
                 meta.Title <- data.Title
                 meta
+                *)
